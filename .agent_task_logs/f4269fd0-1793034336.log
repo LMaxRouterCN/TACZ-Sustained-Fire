@@ -1,0 +1,17 @@
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\AbstractButtonMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\GameRendererMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\HumanoidModelMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\ItemInHandLayerMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\ItemInHandRendererMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\LanguageMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\LocalPlayerMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\MouseHandlerMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\PlayerModelMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\SoundManagerPreparationsMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\StairBlockAccessor.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\ar\ARCompatMixinPlugin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\client\ar\BedrockPartMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\common\LivingEntityMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\common\ServerGamePacketListenerImplMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\common\ServerPlayerMixin.java
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\mixin\common\ServerPlayNetHandlerMixin.java

@@ -1,0 +1,47 @@
+成功: 尝试运行 "sfbuild"。
+=== build-out.log tail ===
+> Task :downloadMcpConfig
+> Task :extractSrg UP-TO-DATE
+> Task :createMcpToSrg UP-TO-DATE
+
+> Task :compileJava FAILED
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.8/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+4 actionable tasks: 2 executed, 2 up-to-date
+=== build-err.log (2848 bytes) GBK解码 tail ===
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\enchantment\SustainedFireEnchantment.java:20: 错误: 找不到符号
+        super(rarity, EnchantmentCategory.BREAKABLE, new EquipmentSlot[]{EquipmentSlot.MAINHAND});
+                      ^
+  符号:   变量 EnchantmentCategory
+  位置: 类 SustainedFireEnchantment
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\GunDataMixin.java:62: 错误: 找不到符号
+            cir.setReturnValue((long) (cir.getReturnValueL() / bonus));
+                                          ^
+  符号:   方法 getReturnValueL()
+  位置: 类型为CallbackInfoReturnable<Long>的变量 cir
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\SustainedFire.java:22: 警告: [removal] FMLJavaModLoadingContext 中的 get() 已过时, 且标记为待删除
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+                                                   ^
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+3 个错误
+1 个警告
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 12s
+
+=== 产物检查 ===
+

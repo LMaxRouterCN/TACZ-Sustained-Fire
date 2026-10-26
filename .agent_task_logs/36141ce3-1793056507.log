@@ -1,0 +1,60 @@
+成功: 尝试运行 "sfbuild"。
+=== build-out.log tail ===
+> Configure project :
+MixinGradle did not locate the diffplug APT plugin, skipping eclipse task configuration
+Java: 17.0.12, JVM: 17.0.12+7-LTS (Azul Systems, Inc.), Arch: amd64
+
+> Task :downloadMcpConfig
+> Task :extractSrg UP-TO-DATE
+> Task :createMcpToSrg UP-TO-DATE
+
+> Task :compileJava FAILED
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.8/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+4 actionable tasks: 2 executed, 2 up-to-date
+=== build-err.log GBK 全文 ===
+注: SpongePowered MIXIN Annotation Processor Version=0.8.5 (MixinGradle Version=0.7.38)
+注: Supported obfuscation types: ObfuscationServiceMCP supports [notch] ObfuscationServiceFG3 supports [searge]
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing searge composite mappings to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-mappings.tsrg
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing searge composite mappings to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-mappings.tsrg
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\ammo\AmmoSourceResolver.java:47: 错误: 无法将类 LazyOptional<T#2>中的方法 of应用到给定类型;
+        return LazyOptional.of(new CombinedView(sources.toArray(new IItemHandler[0])));
+                           ^
+  需要: NonNullSupplier<T#1>
+  找到:    CombinedView
+  原因: 无法推断类型变量 T#1
+    (参数不匹配; CombinedView无法转换为NonNullSupplier<T#1>)
+  其中, T#1,T#2是类型变量:
+    T#1扩展已在方法 <T#1>of(NonNullSupplier<T#1>)中声明的Object
+    T#2扩展已在类 LazyOptional中声明的Object
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\SustainedFire.java:22: 警告: [removal] FMLJavaModLoadingContext 中的 get() 已过时, 且标记为待删除
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+                                                   ^
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+1 个错误
+1 个警告
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 13s
+
+=== 产物 ===
+
+(jar 未产出)

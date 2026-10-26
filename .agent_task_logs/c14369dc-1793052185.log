@@ -1,0 +1,70 @@
+?: SpongePowered MIXIN Annotation Processor Version=0.8.5 (MixinGradle Version=0.7.38)
+?: Supported obfuscation types: ObfuscationServiceMCP supports [notch] ObfuscationServiceFG3 supports [searge]
+?: Loading searge mappings from D:\Documents\mcmod\TACZ-Sustained-Fire\build\createMcpToSrg\output.tsrg
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\AbstractGunItemMixin.java:33: ????: Unable to locate obfuscation mapping for @Inject target useInventoryAmmo
+    @Inject(method = "useInventoryAmmo(Lnet/minecraft/world/item/ItemStack;)Z", at = @At("RETURN"))
+    ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\GunDataMixin.java:32: ????: Unable to locate obfuscation mapping for @Inject target getShootInterval
+    @Inject(method = "getShootInterval(Lnet/minecraft/world/entity/LivingEntity;Lcom/tacz/guns/api/item/gun/FireMode;Lnet/minecraft/world/item/ItemStack;)J",
+    ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\AbstractGunItemMixin.java:49: ????: Unable to locate method mapping for @At(INVOKE.<target>) 'Lnet/minecraft/world/entity/LivingEntity;getCapability(Lnet/minecraftforge/common/capabilities/Capability;Lnet/minecraft/core/Direction;)Ljava/util/Optional;'
+    @Redirect(method = "hasInventoryAmmo(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Z)Z",
+    ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\AbstractGunItemMixin.java:49: ????: Unable to locate obfuscation mapping for @Redirect target hasInventoryAmmo
+    @Redirect(method = "hasInventoryAmmo(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Z)Z",
+    ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\LivingEntityShootMixin.java:24: ????: Unable to locate method mapping for @At(INVOKE.<target>) 'Lnet/minecraft/world/entity/LivingEntity;getCapability(Lnet/minecraftforge/common/capabilities/Capability;Lnet/minecraft/core/Direction;)Ljava/util/Optional;'
+    @Redirect(method = "consumeAmmoFromPlayer(ILnet/minecraft/world/item/ItemStack;Z)V",
+    ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\LivingEntityShootMixin.java:24: ????: Unable to locate obfuscation mapping for @Redirect target consumeAmmoFromPlayer
+    @Redirect(method = "consumeAmmoFromPlayer(ILnet/minecraft/world/item/ItemStack;Z)V",
+    ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\ModernKineticGunScriptAPIMixin.java:39: ????: Unable to locate method mapping for @At(INVOKE.<target>) 'Lnet/minecraft/world/entity/LivingEntity;getCapability(Lnet/minecraftforge/common/capabilities/Capability;Lnet/minecraft/core/Direction;)Ljava/util/Optional;'
+    @Redirect(method = "consumeAmmoFromPlayer(I)I",
+    ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\ModernKineticGunScriptAPIMixin.java:39: ????: Unable to locate obfuscation mapping for @Redirect target consumeAmmoFromPlayer
+    @Redirect(method = "consumeAmmoFromPlayer(I)I",
+    ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\ModernKineticGunScriptAPIMixin.java:51: ????: Unable to locate method mapping for @At(INVOKE.<target>) 'Lcom/tacz/guns/resource/pojo/data/gun/GunHeatData;getHeatPerShot()F'
+    @Redirect(method = "handleShootHeat()V",
+    ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\ModernKineticGunScriptAPIMixin.java:51: ????: Unable to locate obfuscation mapping for @Redirect target handleShootHeat
+    @Redirect(method = "handleShootHeat()V",
+    ^
+?: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\ModernKineticGunScriptAPIMixin.java:35: ????: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow private ItemStack itemStack;
+    ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\ModernKineticGunScriptAPIMixin.java:36: ????: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow private AbstractGunItem abstractGunItem;
+    ^
+?: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+?: Writing searge composite mappings to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-mappings.tsrg
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\enchantment\SustainedFireEnchantment.java:3: ????: ?????????
+import com.tacz.guns.item.AbstractGunItem;
+                         ^
+  ????:   ?? AbstractGunItem
+  ¦Ë??: ????? com.tacz.guns.item
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\mixin\GunDataMixin.java:9: ????: ?????????
+import com.tacz.guns.api.item.gun.IGun;
+                                 ^
+  ????:   ?? IGun
+  ¦Ë??: ????? com.tacz.guns.api.item.gun
+?: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+?: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+?: Writing searge composite mappings to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-mappings.tsrg
+8 ??????
+6 ??????
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 1m 14s
+

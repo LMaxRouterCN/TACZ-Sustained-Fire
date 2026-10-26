@@ -1,0 +1,268 @@
+refmap entries: 1
+{
+  "mappings": {
+    "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/MixinLivingEntity": {
+      "aiStep": "Lnet/minecraft/world/entity/LivingEntity;m_8107_()V",
+      "actuallyHurt": "Lnet/minecraft/world/entity/LivingEntity;m_6475_(Lnet/minecraft/world/damagesource/DamageSource;F)V",
+      "Lnet/minecraft/world/entity/LivingEntity;serverAiStep()V": "Lnet/minecraft/world/entity/LivingEntity;m_6140_()V",
+      "hurt": "Lnet/minecraft/world/entity/LivingEntity;m_6469_(Lnet/minecraft/world/damagesource/DamageSource;F)Z"
+    },
+    "mod/chloeprime/apotheosismodernragnarok/mixin/tacz/MixinEntityKineticBulletHigh": {
+      "Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z": "Lnet/minecraft/world/entity/Entity;m_6469_(Lnet/minecraft/world/damagesource/DamageSource;F)Z"
+    },
+    "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/MakeGunEnchantableMixin": {
+      "isEnchantable": "Lnet/minecraft/world/item/Item;m_8120_(Lnet/minecraft/world/item/ItemStack;)Z"
+    },
+    "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/LootTableAccessor": {
+      "pools": "f_79109_:Ljava/util/List;"
+    },
+    "mod/chloeprime/apotheosismodernragnarok/mixin/tacz/MixinEntityKineticBullet": {
+      "Lnet/minecraft/world/phys/Vec3;scale(D)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/world/phys/Vec3;m_82490_(D)Lnet/minecraft/world/phys/Vec3;",
+      "tick": "Lcom/tacz/guns/entity/EntityKineticBullet;m_8119_()V",
+      "Lcom/tacz/guns/entity/EntityKineticBullet;isInWater()Z": "Lcom/tacz/guns/entity/EntityKineticBullet;m_20069_()Z"
+    },
+    "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/LivingEntityAccessor": {
+      "dropExperience": "m_21226_()V",
+      "dropFromLootTable": "m_7625_(Lnet/minecraft/world/damagesource/DamageSource;Z)V",
+      "shouldDropLoot": "m_6125_()Z",
+      "noJumpDelay": "f_20954_:I",
+      "dead": "f_20890_:Z",
+      "DATA_HEALTH_ID": "f_20961_:Lnet/minecraft/network/syncher/EntityDataAccessor;"
+    },
+    "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/LootPoolAccessor": {
+      "entries": "f_79023_:[Lnet/minecraft/world/level/storage/loot/entries/LootPoolEntryContainer;"
+    },
+    "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/client/EntityRenderAccessor": {
+      "shouldShowName": "m_6512_(Lnet/minecraft/world/entity/Entity;)Z"
+    }
+  },
+  "data": {
+    "searge": {
+      "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/MixinLivingEntity": {
+        "aiStep": "Lnet/minecraft/world/entity/LivingEntity;m_8107_()V",
+        "actuallyHurt": "Lnet/minecraft/world/entity/LivingEntity;m_6475_(Lnet/minecraft/world/damagesource/DamageSource;F)V",
+        "Lnet/minecraft/world/entity/LivingEntity;serverAiStep()V": "Lnet/minecraft/world/entity/LivingEntity;m_6140_()V",
+        "hurt": "Lnet/minecraft/world/entity/LivingEntity;m_6469_(Lnet/minecraft/world/damagesource/DamageSource;F)Z"
+      },
+      "mod/chloeprime/apotheosismodernragnarok/mixin/tacz/MixinEntityKineticBulletHigh": {
+        "Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z": "Lnet/minecraft/world/entity/Entity;m_6469_(Lnet/minecraft/world/damagesource/DamageSource;F)Z"
+      },
+      "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/MakeGunEnchantableMixin": {
+        "isEnchantable": "Lnet/minecraft/world/item/Item;m_8120_(Lnet/minecraft/world/item/ItemStack;)Z"
+      },
+      "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/LootTableAccessor": {
+        "pools": "f_79109_:Ljava/util/List;"
+      },
+      "mod/chloeprime/apotheosismodernragnarok/mixin/tacz/MixinEntityKineticBullet": {
+        "Lnet/minecraft/world/phys/Vec3;scale(D)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/world/phys/Vec3;m_82490_(D)Lnet/minecraft/world/phys/Vec3;",
+        "tick": "Lcom/tacz/guns/entity/EntityKineticBullet;m_8119_()V",
+        "Lcom/tacz/guns/entity/EntityKineticBullet;isInWater()Z": "Lcom/tacz/guns/entity/EntityKineticBullet;m_20069_()Z"
+      },
+      "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/LivingEntityAccessor": {
+        "dropExperience": "m_21226_()V",
+        "dropFromLootTable": "m_7625_(Lnet/minecraft/world/damagesource/DamageSource;Z)V",
+        "shouldDropLoot": "m_6125_()Z",
+        "noJumpDelay": "f_20954_:I",
+        "dead": "f_20890_:Z",
+        "DATA_HEALTH_ID": "f_20961_:Lnet/minecraft/network/syncher/EntityDataAccessor;"
+      },
+      "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/LootPoolAccessor": {
+        "entries": "f_79023_:[Lnet/minecraft/world/level/storage/loot/entries/LootPoolEntryContainer;"
+      },
+      "mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/client/EntityRenderAccessor": {
+        "shouldShowName": "m_6512_(Lnet/minecraft/world/entity/Entity;)Z"
+      }
+    }
+  }
+}
+=== STRINGS MakeGunEnchantableMixin.class ===
+Omod/chloeprime/apotheosismodernragnarok/mixin/minecraft/MakeGunEnchantableMixin
+java/lang/Object
+/net/minecraftforge/common/extensions/IForgeItem
+MakeGunEnchantableMixin.java
+#Lorg/spongepowered/asm/mixin/Mixin;
+Lnet/minecraft/world/item/Item;
+priority
+%java/lang/invoke/MethodHandles$Lookup
+java/lang/invoke/MethodHandles
+Lookup
+<init>
+QLmod/chloeprime/apotheosismodernragnarok/mixin/minecraft/MakeGunEnchantableMixin;
+gunIsEnchantable
+n(Lnet/minecraft/world/item/ItemStack;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V
+?(Lnet/minecraft/world/item/ItemStack;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable<Ljava/lang/Boolean;>;)V
+.Lorg/spongepowered/asm/mixin/injection/Inject;
+method
+isEnchantable
+*Lorg/spongepowered/asm/mixin/injection/At;
+cancellable
+com/tacz/guns/api/item/IGun
+java/lang/Boolean
+valueOf
+(Z)Ljava/lang/Boolean;
+Eorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable
+setReturnValue
+(Ljava/lang/Object;)V
+$Lnet/minecraft/world/item/ItemStack;
+\Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable<Ljava/lang/Boolean;>;
+GLorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;
+giveEnchantmentValue
+?(Lnet/minecraft/world/item/ItemStack;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable<Ljava/lang/Integer;>;)V
+getEnchantmentValue
+%Lorg/spongepowered/asm/mixin/Dynamic;
+,mod/chloeprime/gunsmithlib/api/util/Gunsmith
+getGunInfo
+:(Lnet/minecraft/world/item/ItemStack;)Ljava/util/Optional;
+java/util/Optional
+orElse
+&(Ljava/lang/Object;)Ljava/lang/Object;
++mod/chloeprime/gunsmithlib/api/util/GunInfo
+Cmod/chloeprime/apotheosismodernragnarok/common/gunpack/GunApothData
+C(Lmod/chloeprime/gunsmithlib/api/util/GunInfo;)Ljava/util/Optional;
+lambda$giveEnchantmentValue$0
+Z(Lmod/chloeprime/apotheosismodernragnarok/common/gunpack/GunApothData;)Ljava/lang/Integer;
+"java/lang/invoke/LambdaMetafactory
+metafactory
+?(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+()Ljava/util/function/Function;
+3(Ljava/util/function/Function;)Ljava/util/Optional;
+()Ljava/lang/Object;
+lambda$giveEnchantmentValue$1
+B(Lmod/chloeprime/gunsmithlib/api/util/GunInfo;)Ljava/lang/Integer;
+()Ljava/lang/Integer;
+L(Lmod/chloeprime/gunsmithlib/api/util/GunInfo;)Ljava/util/function/Supplier;
+orElseGet
+1(Ljava/util/function/Supplier;)Ljava/lang/Object;
+java/lang/Integer
+\Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable<Ljava/lang/Integer;>;
+-Lmod/chloeprime/gunsmithlib/api/util/GunInfo;
+canApplyAtEnchantingTable
+?(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/enchantment/Enchantment;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V
+?(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/enchantment/Enchantment;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable<Ljava/lang/Boolean;>;)V
+net/minecraft/world/item/Item
+Nmod/chloeprime/apotheosismodernragnarok/common/enchantment/GunEnchantmentHooks
+canGunApplyEnchantmentAtTable
+?(Lnet/minecraft/world/item/Item;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/enchantment/Enchantment;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V
+enchantment
+2Lnet/minecraft/world/item/enchantment/Enchantment;
+defaultEnchantValue
+0(Lmod/chloeprime/gunsmithlib/api/util/GunInfo;)I
+(I)Ljava/lang/Integer;
+enchantment_value
+ELmod/chloeprime/apotheosismodernragnarok/common/gunpack/GunApothData;
+LineNumberTable
+LocalVariableTable
+StackMapTable
+LocalVariableTypeTable
+Signature
+RuntimeVisibleAnnotations
+RuntimeInvisibleAnnotations
+InnerClasses
+SourceFile
+BootstrapMethods
+=== STRINGS MixinAbstractGunItem.class ===
+Gmod/chloeprime/apotheosismodernragnarok/mixin/tacz/MixinAbstractGunItem
+net/minecraft/world/item/Item
+com/tacz/guns/api/item/IGun
+MixinAbstractGunItem.java
+#Lorg/spongepowered/asm/mixin/Mixin;
+,Lcom/tacz/guns/api/item/gun/AbstractGunItem;
+Fmod/chloeprime/apotheosismodernragnarok/common/ModContent$Enchantments
+9mod/chloeprime/apotheosismodernragnarok/common/ModContent
+Enchantments
+(net/minecraft/world/item/Item$Properties
+Properties
+"dontDropAmmoForProjectionMagicGuns
+?(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V
+.Lorg/spongepowered/asm/mixin/injection/Inject;
+method
+dropAllAmmo
+*Lorg/spongepowered/asm/mixin/injection/At;
+cancellable
+PROJECTION_MAGIC
+.Lnet/minecraftforge/registries/RegistryObject;
+,net/minecraftforge/registries/RegistryObject
+()Ljava/lang/Object;
+0net/minecraft/world/item/enchantment/Enchantment
+"net/minecraft/world/item/ItemStack
+getEnchantmentLevel
+5(Lnet/minecraft/world/item/enchantment/Enchantment;)I
+setCurrentAmmoCount
+((Lnet/minecraft/world/item/ItemStack;I)V
+;org/spongepowered/asm/mixin/injection/callback/CallbackInfo
+cancel
+ILmod/chloeprime/apotheosismodernragnarok/mixin/tacz/MixinAbstractGunItem;
+player
+*Lnet/minecraft/world/entity/player/Player;
+gunItem
+$Lnet/minecraft/world/item/ItemStack;
+=Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;
+<init>
+-(Lnet/minecraft/world/item/Item$Properties;)V
+pProperties
+*Lnet/minecraft/world/item/Item$Properties;
+StackMapTable
+LineNumberTable
+LocalVariableTable
+RuntimeVisibleAnnotations
+InnerClasses
+SourceFile
+RuntimeInvisibleAnnotations
+=== STRINGS MixinModernKineticGunItem.class ===
+Lmod/chloeprime/apotheosismodernragnarok/mixin/tacz/MixinModernKineticGunItem
+java/lang/Object
+MixinModernKineticGunItem.java
+#Lorg/spongepowered/asm/mixin/Mixin;
+)Lcom/tacz/guns/item/ModernKineticGunItem;
+<init>
+NLmod/chloeprime/apotheosismodernragnarok/mixin/tacz/MixinModernKineticGunItem;
+knockbackEnchantments
+-(FLnet/minecraft/world/entity/LivingEntity;)F
+6Lorg/spongepowered/asm/mixin/injection/ModifyVariable;
+method
+doMelee
+*Lorg/spongepowered/asm/mixin/injection/At;
+ordinal
+argsOnly
+6net/minecraft/world/item/enchantment/EnchantmentHelper
+m_44894_
+,(Lnet/minecraft/world/entity/LivingEntity;)I
+oldKnockback
+)Lnet/minecraft/world/entity/LivingEntity;
+sharpnessEnchantments
+h(FLnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/LivingEntity;FFLjava/util/List;)F
+?(FLnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/LivingEntity;FFLjava/util/List<Lcom/tacz/guns/resource/pojo/data/attachment/EffectData;>;)F
+doPerLivingHurt
+'net/minecraft/world/entity/LivingEntity
+m_21205_
+&()Lnet/minecraft/world/item/ItemStack;
+m_6336_
+&()Lnet/minecraft/world/entity/MobType;
+m_44833_
+K(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/MobType;)F
+oldDamage
+target
+knockback
+ignored
+effects
+JLjava/util/List<Lcom/tacz/guns/resource/pojo/data/attachment/EffectData;>;
+Ljava/util/List;
+LineNumberTable
+LocalVariableTable
+RuntimeVisibleAnnotations
+LocalVariableTypeTable
+Signature
+SourceFile
+RuntimeInvisibleAnnotations
+=== STRINGS MixinModernKineticGunScriptAPI.class ===
+Qmod/chloeprime/apotheosismodernragnarok/mixin/tacz/MixinModernKineticGunScriptAPI
+java/lang/Object
+#MixinModernKineticGunScriptAPI.java
+#Lorg/spongepowered/asm/mixin/Mixin;
+.Lcom/tacz/guns/item/ModernKineticGunScriptAPI;
+<init>
+SLmod/chloeprime/apotheosismodernragnarok/mixin/tacz/MixinModernKineticGunScriptAPI;
+LineNumberTable
+LocalVariableTable
+SourceFile
+RuntimeInvisibleAnnotations

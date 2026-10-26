@@ -1,0 +1,52 @@
+probe ok: 06:59:18
+FIXED: AirCoolingEnchantment.java
+FIXED: BeltFeedEnchantment.java
+FIXED: CoolingDeviceEnchantment.java
+FIXED: PreheatEnchantment.java
+FIXED: ProgressiveTriggerEnchantment.java
+FIXED: SustainedFireEnchantment.java
+===== 残留验证(应为空):
+===== ModEnchantments.java 全文:
+package com.lmaxroutercn.sustainedfire.registry;
+
+import com.lmaxroutercn.sustainedfire.SustainedFire;
+import com.lmaxroutercn.sustainedfire.enchantment.AirCoolingEnchantment;
+import com.lmaxroutercn.sustainedfire.enchantment.BeltFeedEnchantment;
+import com.lmaxroutercn.sustainedfire.enchantment.CoolingDeviceEnchantment;
+import com.lmaxroutercn.sustainedfire.enchantment.PreheatEnchantment;
+import com.lmaxroutercn.sustainedfire.enchantment.ProgressiveTriggerEnchantment;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
+
+/**
+ * Sustained Fire 附魔注册表。
+ * registry name 即 lang key 与 JEI 显示的默认英文 id。
+ */
+public final class ModEnchantments {
+    private ModEnchantments() {}
+
+    public static final DeferredRegister<Enchantment> ENCHANTMENTS =
+            DeferredRegister.create(ForgeRegistries.ENCHANTMENTS, SustainedFire.MODID);
+
+    /** 冷却装置：每级过热增速 -10%（10 级免过热） */
+    public static final RegistryObject<Enchantment> COOLING_DEVICE =
+            ENCHANTMENTS.register("cooling_device", CoolingDeviceEnchantment::new);
+
+    /** 风冷：射速越高过热增速越慢，允许负值（射击反而散热） */
+    public static final RegistryObject<Enchantment> AIR_COOLING =
+            ENCHANTMENTS.register("air_cooling", AirCoolingEnchantment::new);
+
+    /** 弹链升级（宝藏附魔）：射击直接消耗背包弹药，免换弹 */
+    public static final RegistryObject<Enchantment> BELT_FEED =
+            ENCHANTMENTS.register("belt_feed", BeltFeedEnchantment::new);
+
+    /** 预热：过热值越高射速越快 */
+    public static final RegistryObject<Enchantment> PREHEAT =
+            ENCHANTMENTS.register("preheat", PreheatEnchantment::new);
+
+    /** 渐进射速：连续射击一段时间后射速渐增（加成低于预热） */
+    public static final RegistryObject<Enchantment> PROGRESSIVE_TRIGGER =
+            ENCHANTMENTS.register("progressive_trigger", ProgressiveTriggerEnchantment::new);
+}

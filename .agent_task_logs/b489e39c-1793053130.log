@@ -1,0 +1,18 @@
+probe ok: 06:18:50
+===== MKGSA 字段声明（itemStack/abstractGunItem/shooter）:
+  L52: private LivingEntity shooter;
+  L56: private ItemStack itemStack;
+  L58: private AbstractGunItem abstractGunItem;
+===== handleShootHeat 签名与 getHeatPerShot 调用:
+  L122: float heatMax = modifyProperty(GunProperties.RuntimeOnly.MAX_HEAT, Float.class, heatData.getHeatMax());
+  L176: this::handleShootHeat
+  L216: public void handleShootHeat() {
+  L221: float newHeat = Math.min(abstractGunItem.getHeatAmount(itemStack) + heatData.getHeatPerShot(), heatData.getHeatMax());
+  L223: if (newHeat >= heatData.getHeatMax()) {
+  L785: public float getHeatMaxRpm() {
+  L795: public float getHeatMaxInaccuracy() {
+  L800: public float getHeatMax() {
+  L801: if(hasHeatData()) return gunIndex.getGunData().getHeatData().getHeatMax();
+  L805: public float getHeatPerShot() {
+  L806: if(hasHeatData()) return gunIndex.getGunData().getHeatData().getHeatPerShot();
+回收站冲突项已清理: D:/Documents/mcmod/TACZ-Sustained-Fire/.agent_trash/src/main/java/com/lmaxroutercn/sustainedfire/ammo/AmmoSourceResolver.java

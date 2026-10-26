@@ -1,0 +1,26 @@
+# Gradle
+.gradle/
+build/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+bin/
+*.launch
+
+# 运行时客户端
+run/
+
+# 构建日志（schtasks 重定向产物）
+build-out.log
+build-err.log
+
+# 框架回收站
+.agent_trash/
+
+# 依赖 jar 必须提交（flatDir 仓库）
+# libs/ 不忽略

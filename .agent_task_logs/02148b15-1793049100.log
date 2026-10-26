@@ -1,0 +1,35 @@
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\api\item\gun\AbstractGunItem.java:122: public boolean canReload(LivingEntity shooter, ItemStack gunItem) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\api\item\gun\AbstractGunItem.java:135: if (useInventoryAmmo(gunItem)) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\api\item\gun\AbstractGunItem.java:171: if (useInventoryAmmo(gunItem)) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\api\item\gun\AbstractGunItem.java:399: public boolean useInventoryAmmo(ItemStack gun) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\api\item\gun\AbstractGunItem.java:418: public boolean hasInventoryAmmo(LivingEntity shooter, ItemStack gun, boolean needCheckAmmo) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\api\item\gun\AbstractGunItem.java:420: if (!useInventoryAmmo(gun)) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\api\item\gun\AbstractGunItem.java:460: rpm *= (int) iGun.lerpRPM(gun);
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\api\item\nbt\GunItemDataAccessor.java:219: if (!useInventoryAmmo(gun)) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\api\item\nbt\GunItemDataAccessor.java:415: default float lerpRPM(ItemStack gun) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\entity\shooter\LivingEntityShoot.java:112: boolean useInventoryAmmo = iGun.useInventoryAmmo(currentGunItem);
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\entity\shooter\LivingEntityShoot.java:116: boolean hasInventoryAmmo = iGun.hasInventoryAmmo(shooter, currentGunItem, gunOperator.needCheckAmmo()) || hasAmmoInBarrel;
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\entity\shooter\LivingEntityShoot.java:119: boolean noAmmo = useInventoryAmmo && !hasInventoryAmmo ||
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\entity\shooter\LivingEntityShoot.java:120: !useInventoryAmmo && ammoCount < 1;
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\entity\shooter\LivingEntityShoot.java:137: if (useInventoryAmmo) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\entity\shooter\LivingEntityShoot.java:138: consumeAmmoFromPlayer(1, currentGunItem, gunOperator.needCheckAmmo());
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\entity\shooter\LivingEntityShoot.java:258: long coolDown = index.getGunData().getShootInterval(this.shooter, fireMode, currentGunItem) - interval;
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\entity\shooter\LivingEntityShoot.java:268: public void consumeAmmoFromPlayer(int neededAmount, ItemStack itemStack, boolean needCheckAmmo) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:119: float heatInaccuracy = 1f;
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:124: heatInaccuracy *= Mth.lerp(heatPercentage, heatData.getMinInaccuracy(), heatData.getMaxInaccuracy());
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:129: final float unmodifiedInaccuracy = cacheProperty.getCache(GunProperties.INACCURACY).get(inaccuracyType) * heatInaccuracy;
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:176: this::handleShootHeat
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:216: public void handleShootHeat() {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:240: boolean hasInventoryAmmo = abstractGunItem.hasInventoryAmmo(shooter, itemStack, isReloadingNeedConsumeAmmo());
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:242: boolean noAmmo = useInventoryAmmo() && !hasInventoryAmmo ||
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:243: !useInventoryAmmo() && abstractGunItem.getCurrentAmmoCount(itemStack) < 1;
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:262: if (useInventoryAmmo()) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:263: return consumeAmmoFromPlayer(1) == 1;
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:284: if (useInventoryAmmo()) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:285: return consumeAmmoFromPlayer(1) == 1;
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:324: public long getShootInterval() {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:332: long coolDown = gunIndex.getGunData().getShootInterval(this.shooter, fireMode, itemStack);
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:541: public int consumeAmmoFromPlayer(int neededAmount) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:543: if (useInventoryAmmo() && !isReloadingNeedConsumeAmmo()) {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:865: public boolean useInventoryAmmo() {
+D:\Documents\mcmod\sustained-fire-ref\tacz\TACZ\src\main\java\com\tacz\guns\item\ModernKineticGunScriptAPI.java:866: return abstractGunItem.useInventoryAmmo(itemStack);

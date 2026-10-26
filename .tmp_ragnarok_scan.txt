@@ -1,0 +1,62 @@
+mixins json count: 1
+=== apotheosis_modern_ragnarok.mixins.json ===
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "mod.chloeprime.apotheosismodernragnarok.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "apotheosis_modern_ragnarok.refmap.json",
+  "mixins": [
+    "apoth.AffixAdaptableMixin$Potion",
+    "apoth.AffixAdaptableMixin$Telepathic",
+    "apoth.EnderSurgeGemCompatMixin",
+    "apoth.GemInstanceAccessor",
+    "apoth.MagicDamageReductionFixMixin",
+    "apoth.MeleeGunIsSwordMixin",
+    "apoth.MixinAttributeLibAttributeEvents",
+    "apoth.MixinGem",
+    "apoth.MixinLootCategory",
+    "apoth.MixinLootController",
+    "hacks.InterfaceDefaultImplInjectors$Item",
+    "minecraft.LivingEntityAccessor",
+    "minecraft.LootPoolAccessor",
+    "minecraft.LootTableAccessor",
+    "minecraft.MakeGunEnchantableMixin",
+    "minecraft.MixinDamageSource",
+    "minecraft.MixinLivingEntity",
+    "minecraft.MixinMinecraftServer",
+    "tacz.EntityKineticBulletAccessor",
+    "tacz.MixinAbstractGunItem",
+    "tacz.MixinEntityKineticBullet",
+    "tacz.MixinEntityKineticBulletHigh",
+    "tacz.MixinModernKineticGunItem",
+    "tacz.MixinModernKineticGunScriptAPI",
+    "tacz.gunpack.MixinGunData"
+  ],
+  "client": [
+    "minecraft.client.EntityRenderAccessor",
+    "minecraft.client.MixinParticle",
+    "tacz.client.BlueMuzzleFlashMixin$CaptureState",
+    "tacz.client.BlueMuzzleFlashMixin$ModifyTexture",
+    "tacz.client.MagicShotParticleMixin",
+    "tacz.client.MixinSoundPlayManager"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
+
+=== enchant classes ===
+mod/chloeprime/apotheosismodernragnarok/common/ModContent$Enchantments.class
+mod/chloeprime/apotheosismodernragnarok/common/enchantment/AttributedGunEnchantmentBase.class
+mod/chloeprime/apotheosismodernragnarok/common/enchantment/BulletRiptideEnchantment.class
+mod/chloeprime/apotheosismodernragnarok/common/enchantment/EmergencyProtectorEnchantment.class
+mod/chloeprime/apotheosismodernragnarok/common/enchantment/GunEnchantmentHooks.class
+mod/chloeprime/apotheosismodernragnarok/common/enchantment/LastStandEnchantment.class
+mod/chloeprime/apotheosismodernragnarok/common/enchantment/PerfectBlockEnchantment.class
+mod/chloeprime/apotheosismodernragnarok/common/enchantment/ProjectionMagicEnchantment.class
+mod/chloeprime/apotheosismodernragnarok/common/enchantment/ReduceRecoilEnchantment.class
+mod/chloeprime/apotheosismodernragnarok/common/enchantment/SurvivalInstinctEnchantment.class
+mod/chloeprime/apotheosismodernragnarok/common/eventhandlers/MiscEnchantmentAdapter.class
+mod/chloeprime/apotheosismodernragnarok/common/internal/PerfectBlockEnchantmentUser.class
+mod/chloeprime/apotheosismodernragnarok/mixin/minecraft/MakeGunEnchantableMixin.class

@@ -1,0 +1,71 @@
+成功: 尝试运行 "sfbuild"。
+=== build-out.log tail ===
+Java: 17.0.12, JVM: 17.0.12+7-LTS (Azul Systems, Inc.), Arch: amd64
+
+> Task :downloadMcpConfig
+> Task :extractSrg UP-TO-DATE
+> Task :createMcpToSrg UP-TO-DATE
+
+> Task :compileJava FAILED
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.8/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+4 actionable tasks: 2 executed, 2 up-to-date
+=== build-err.log GBK 全文 ===
+注: SpongePowered MIXIN Annotation Processor Version=0.8.5 (MixinGradle Version=0.7.38)
+注: Supported obfuscation types: ObfuscationServiceMCP supports [notch] ObfuscationServiceFG3 supports [searge]
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing searge composite mappings to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-mappings.tsrg
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\enchantment\AirCoolingEnchantment.java:2: 错误: 找不到符号
+import net.minecraft.world.item.enchantment.Rarity;
+                                           ^
+  符号:   类 Rarity
+  位置: 程序包 net.minecraft.world.item.enchantment
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\enchantment\SustainedFireEnchantment.java:3: 错误: 找不到符号
+import net.minecraft.world.item.enchantment.Rarity;
+                                           ^
+  符号:   类 Rarity
+  位置: 程序包 net.minecraft.world.item.enchantment
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\enchantment\BeltFeedEnchantment.java:2: 错误: 找不到符号
+import net.minecraft.world.item.enchantment.Rarity;
+                                           ^
+  符号:   类 Rarity
+  位置: 程序包 net.minecraft.world.item.enchantment
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\enchantment\CoolingDeviceEnchantment.java:2: 错误: 找不到符号
+import net.minecraft.world.item.enchantment.Rarity;
+                                           ^
+  符号:   类 Rarity
+  位置: 程序包 net.minecraft.world.item.enchantment
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\enchantment\PreheatEnchantment.java:2: 错误: 找不到符号
+import net.minecraft.world.item.enchantment.Rarity;
+                                           ^
+  符号:   类 Rarity
+  位置: 程序包 net.minecraft.world.item.enchantment
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\enchantment\ProgressiveTriggerEnchantment.java:2: 错误: 找不到符号
+import net.minecraft.world.item.enchantment.Rarity;
+                                           ^
+  符号:   类 Rarity
+  位置: 程序包 net.minecraft.world.item.enchantment
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing searge composite mappings to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-mappings.tsrg
+6 个错误
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 12s
+
+=== 产物 ===
+

@@ -1,0 +1,54 @@
+##### AbstractGunItem.java — 方法声明:
+  L122: public boolean canReload(LivingEntity shooter, ItemStack gunItem) {
+  L399: public boolean useInventoryAmmo(ItemStack gun) {
+  L418: public boolean hasInventoryAmmo(LivingEntity shooter, ItemStack gun, boolean needCheckAmmo) {
+  L452: public int getRPM(ItemStack gun) {
+##### AbstractGunItem.java — getCapability 调用点(含后文):
+  >>> L147: return shooter.getCapability(ForgeCapabilities.ITEM_HANDLER, null).map(cap -> {
+      // 背包检查
+      for (int i = 0; i < cap.getSlots(); i++) {
+      ItemStack checkAmmoStack = cap.getStackInSlot(i);
+      if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(gunItem, checkAmmoStack)) {
+      return true;
+      }
+  >>> L432: return shooter.getCapability(ForgeCapabilities.ITEM_HANDLER, null).map(cap -> {
+      // 背包检查
+      for (int i = 0; i < cap.getSlots(); i++) {
+      ItemStack checkAmmoStack = cap.getStackInSlot(i);
+      if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(gun, checkAmmoStack)) {
+      return true;
+      }
+
+##### ModernKineticGunScriptAPI.java — 方法声明:
+  L541: public int consumeAmmoFromPlayer(int neededAmount) {
+  L865: public boolean useInventoryAmmo() {
+##### ModernKineticGunScriptAPI.java — getCapability 调用点(含后文):
+  >>> L549: return shooter.getCapability(ForgeCapabilities.ITEM_HANDLER, null)
+      .map(cap -> abstractGunItem.findAndExtractInventoryAmmo(cap, itemStack, neededAmount))
+      .orElse(0);
+      }
+      }
+      
+      /**
+  >>> L567: return shooter.getCapability(ForgeCapabilities.ITEM_HANDLER, null).map(cap -> {
+      // 背包检查
+      for (int i = 0; i < cap.getSlots(); i++) {
+      ItemStack checkAmmoStack = cap.getStackInSlot(i);
+      if (checkAmmoStack.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(itemStack, checkAmmoStack)) {
+      return true;
+      }
+
+##### LivingEntityShoot.java — 方法声明:
+  L268: public void consumeAmmoFromPlayer(int neededAmount, ItemStack itemStack, boolean needCheckAmmo) {
+##### LivingEntityShoot.java — getCapability 调用点(含后文):
+  >>> L279: shooter.getCapability(ForgeCapabilities.ITEM_HANDLER, null)
+      .map(cap -> abstractGunItem.findAndExtractInventoryAmmo(cap, itemStack, neededAmount));
+      }
+      }
+      }
+
+===== getRPM 全库出现位置:
+IGun.java:369: int getRPM(ItemStack gun);
+AbstractGunItem.java:452: public int getRPM(ItemStack gun) {
+RpmModifier.java:37: return new RpmModifier.RpmJsonProperty(data.getRpm());
+RpmModifier.java:109: public Modifier getRpm() {

@@ -1,0 +1,4 @@
+GunDataMixin 替换完成
+--- 验证: getReturnValueT 残留(应为空):
+--- 替换后行:
+L62: cir.setReturnValue((long) (cir.getReturnValue() / (double) bonus));
