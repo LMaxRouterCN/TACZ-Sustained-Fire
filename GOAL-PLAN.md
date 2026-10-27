@@ -53,6 +53,8 @@ mixin注入点均为最小拦截，不复制TACZ代码。
 - canReload @ AbstractGunItem:122-140+：:135-136 直读枪禁止换弹。
 - LocalPlayerShoot:212 客户端预测也走 iGun.hasInventoryAmmo → mixin双端自动覆盖。
 - SB BackpackItem.initCapabilities:403-420：除 CapabilityBackpackWrapper 外，:418-419 也暴露 ForgeCapabilities.ITEM_HANDLER（getInventoryForInputOutput，带count>1保护）→ 弹药源解析走通用"物品容器展开"即可；升级物品注册仍需SB编译期依赖。
+- M6 实证补充（2026-10-27 晚）：换弹真实扣弹点 defaultReloadFinishing @ ModernKineticGunItem:415-450（装填→收尾跳变触发，MAGAZINE 分支 api.consumeAmmoFromPlayer(needAmmoCount)）→ MKGSA:541 → M4 mixin 已覆盖，换弹消耗侧零新增 mixin。
+- 客户端预检闭环：LocalPlayerReload:66 直读枪 return（弹链枪天然免换弹）；:77-78 canReload 预检 needCheckAmmo 时本地拦截不发包；LocalPlayerShoot.preCheck:212 射击预测同走 hasInventoryAmmo（mixin 双端覆盖）→ 客户端 BE 数据可见性为唯一缺口，step3 同步补齐。
 ### 6.4 ragnarok 兼容性（refmap+常量池已验证）
 - MakeGunEnchantableMixin全在Item本体：isEnchantable（幂等可共存）/getEnchantmentValue/canApplyAtEnchantingTable（委托GunEnchantmentHooks）→ 附魔获取主走铁砧书+我们附魔类override canEnchant。
 - MixinModernKineticGunScriptAPI空壳、MixinAbstractGunItem只动dropAllAmmo、MixinModernKineticGunItem只动doMelee/doPerLivingHurt → 与我们全部注入点零冲突。
@@ -61,7 +63,7 @@ mixin注入点均为最小拦截，不复制TACZ代码。
 核心=弹药源解析器 AmmoSourceResolver：CombinedInvWrapper(玩家背包+装备的SB背包+周围弹药箱BE)，优先级可配置。
 - mixin注入点3处 @ModifyVariable 方法头换handler：AbstractGunItem.hasInventoryAmmo、MKGSA.consumeAmmoFromPlayer(:541)、LES.consumeAmmoFromPlayer(:268双参签名)。
 - 需求3弹链：mixin AbstractGunItem.useInventoryAmmo 尾部追加分支（枪NBT sf_belt_fed→true），canReload自动false，HUD自动切背包弹药显示。
-- 需求6：弹药箱BE per-level注册表（onLoad/onRemove维护，双端分表），AABB范围查找。
+- 需求6（2026-10-27 改案，max 可否决，回滚点=AmmoSourceRegistry.getNearbyAmmoBoxes 单函数）：弃 per-level 注册表簿记，手写 chunk 网格扫描现查（getBlockEntitiesOfClass(Class,AABB) 系后期版本 API，1.20.1 无） + OPEN 态过滤（capability 不设限，漏斗免费互通）；BE 数据同步：getUpdateTag 带 Items + onContentsChanged 服务端 sendBlockUpdated（vanilla 默认 getUpdateTag 为空 tag，箱子即如此；GUI 显示走 menu 广播，两通道最终一致）。
 - 需求7：SB条件注册（ModList.isLoaded隔离类）。
 - 需求4/5：mixin GunItemDataAccessor.lerpRPM。渐进射速状态可复用IGunOperator的data字段或枪NBT时间戳。
 - 需求1/2：mixin MKGSA.handleShootHeat。冷却装置 perShot*=(1-0.1*lvl)；风冷=rpm超阈值线性减免perShot可为负（下限配置），参数：thresholdRpm默认600、perRpm默认0.002、floor默认-1.0。设计决策留max复核："射速越高"取静态rpm解释。
@@ -79,7 +81,7 @@ mixin注入点均为最小拦截，不复制TACZ代码。
 3. [x] 源码调研（2026-10-27完成，结论见第六节）
 4. [x] 项目骨架（build.gradle、主类、注册体系、libs复制、mixin配置）
 5. [x] 附魔实现（冷却/风冷/弹链/预热/渐进射速）
-6. [ ] 弹药箱方块
+6. [ ] 弹药箱方块（step1✅ 0344123 / step2✅ 7885a57 / step3 供弹接线+BE同步 / step4 开盖黄线框 / step5 漏斗+集成测试）
 7. [ ] SB联动
 8. [x] 构建通过、commit
 9. [ ] 发布准备（README双语、许可证、图标）
@@ -94,3 +96,9 @@ mixin注入点均为最小拦截，不复制TACZ代码。
   - m134渐进无感定案：TACZ 实际射速上限 1200rpm = 每 tick 一发（ShootKey 逐tick判定 + shoot() 内 coolDown>=50ms 硬门槛 + GunData 内 Mth.clamp(rpm,1,1200) 三重决定）。原始 rpm 顶格的枪（转管机枪类）加成被引擎天花板吸收，低 rpm 枪（霰弹枪）加成明显；"接受上限/突破上限"两选项已抛给用户待定。
   - commit 09787ea，jar 27800B（增量构建 36s）。
 - 2026-10-27（框架坑）：PokerAgent create 指令的路径必须写在指令行内（不能放 code 块首行），否则空路径落工作目录 → Errno13，且失败后队列中止；文件写入改走 exec + WriteAllText（UTF-8 noBOM，中文完整性已验证）。sfbuild schtasks 残留任务已清（防 23:59 空跑构建）。
+- 2026-10-27（M6 弹药箱 step1-2 落地）：
+  - step1 commit 0344123：AmmoCrateBlock（OPEN 属性/shift 开关盖/关盖防呆/双模型占位）+ AmmoCrateBE（27 格 ItemStackHandler+cap）+ 三注册器 + Config（backpackUsable=false/radius=4.0）+ lang/loot/mineable + System.Drawing 三占位贴图。
+  - step2 commit 7885a57：ModMenus/AmmoCrateMenu（63 槽 ChestMenu 几何/手写 stillValid：BE 身份比对+distanceToSqr≤64）/AmmoCrateScreen/ClientSetup（FMLClientSetupEvent+enqueueWork+vanilla MenuScreens.register）+ NetworkHooks.openScreen 开 GUI + GUI 占位贴图。
+  - 1.20.1 API 三坑（详见长期记忆 028）：RegisterMenuScreensEvent 系 NeoForge 事件；BlockEntity.stillValid(Player) 不存在；Player.openMenu(MenuProvider,BlockPos) 解析失败 → NetworkHooks.openScreen。
+  - 过程教训：javac 吞未报下游错误（build1 只报 ClientSetup，Block/Menu 错误下轮才浮出），全绿前不信「就这几个错」。
+  - step3 设计定案：AABB 现查（改案已记第七节）+ BE getUpdateTag 全量 Items 同步（弃摘要方案：空槽 NBT 约 500B/包，弹链高频 ~20 包/s 单箱可接受，复用 serializeNBT 零额外层；卡再换摘要）+ Resolver 接 config 半径（删硬编码 AMMO_BOX_RADIUS）。

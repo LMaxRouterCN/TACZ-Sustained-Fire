@@ -1,5 +1,6 @@
 package com.lmaxroutercn.sustainedfire.ammo;
 
+import com.lmaxroutercn.sustainedfire.config.SustainedFireConfig;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -13,7 +14,7 @@ import java.util.List;
  * 弹药源解析器：Sustained Fire 的核心。
  *
  * 将"玩家哪里有弹药"从 TACZ 原版的"裸背包 cap 遍历"扩展为多源组合视图：
- *   玩家裸背包（含快捷栏） → 背包内容器展开（精妙背包等一切暴露 ITEM_HANDLER 的物品） → 周围弹药箱（里程碑6）
+ *   玩家裸背包（含快捷栏） → 背包内容器展开（精妙背包等一切暴露 ITEM_HANDLER 的物品） → 周围弹药箱（AABB 现查，开盖才供弹）
  *
  * 设计：不重写弹药判定/消耗逻辑，只通过 mixin @Redirect 把 TACZ 各处
  * shooter.getCapability(ITEM_HANDLER) 的裸背包视图替换为本类的组合视图，
@@ -26,9 +27,6 @@ import java.util.List;
  * 嵌套容器只展开一层，不递归。
  */
 public final class AmmoSourceResolver {
-    /** 弹药箱查找半径（格）——里程碑 6 接入实际查找，暂定值待 max 复核 */
-    public static final double AMMO_BOX_RADIUS = 4.0;
-
     private AmmoSourceResolver() {}
 
     /**
@@ -51,7 +49,7 @@ public final class AmmoSourceResolver {
      * 构建弹药源列表（按优先级排序）：
      * 1. 玩家裸背包 cap —— 原版唯一弹药源，保持最高优先级
      * 2. 容器展开 —— 对每个槽位物品查其自身 ITEM_HANDLER（SB 背包经 initCapabilities 暴露）
-     * 3. 周围弹药箱 —— 里程碑 6 前为空列表
+     * 3. 周围弹药箱 —— AABB 现查（查找半径来自 config；开盖过滤在 AmmoSourceRegistry 查询侧）
      */
     private static List<IItemHandler> buildSources(LivingEntity shooter) {
         List<IItemHandler> sources = new ArrayList<>();
@@ -63,7 +61,8 @@ public final class AmmoSourceResolver {
             }
         }
         sources.addAll(expanded);
-        sources.addAll(AmmoSourceRegistry.getNearbyAmmoBoxes(shooter, AMMO_BOX_RADIUS));
+        // 弹药箱查找半径：config 可调（默认 4.0，范围 1.0-64.0）
+        sources.addAll(AmmoSourceRegistry.getNearbyAmmoBoxes(shooter, SustainedFireConfig.AMMO_CRATE_RADIUS.get()));
         return sources;
     }
 
