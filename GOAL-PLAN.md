@@ -68,6 +68,26 @@ mixin注入点均为最小拦截，不复制TACZ代码。
   - 已弃：D（rebuild 第三方 jar）；E（全局覆盖 Player.getCapability，爆炸半径不可控）。
 - 历史遗留缺口（测试项⑦）：GunAnimationStateContext:168 hasAmmoToConsume 我们从未覆盖——弹链枪「背包空+箱有弹」时动画状态机判定可能不同步；taczaddon 已 mixin 此方法（管背包侧），箱侧无人管。
 - 功能情报：taczaddon 的 BackpackAmmoService（createQueryHandler/consumeBackpackAmmo）为装备背包供弹实现，与本项目弹链/弹药箱同功能空间；测试实例内行为观察须分离变量归因（尤其 HUD 弹药显示，其 GunHudOverlayMixin @ModifyArg 改写 handleInventoryAmmo）。
+### 6.6 方案 C 实施草稿（定稿 2026-10-27，拍板后照此落地）
+- AbstractGunItemMixin：
+  - 删除 sf$expandAmmoSource / sf$expandAmmoSourceForReload 两个 @Redirect，及随之不再使用的 import（Capability / Direction / LazyOptional / IItemHandler / Redirect）。
+  - 新增 sf$crateAmmoFallback —— @Inject(method = "hasInventoryAmmo(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Z)Z", at = @At("RETURN"), remap = false, cancellable = true)，handler 参数 (LivingEntity shooter, ItemStack gun, boolean needCheckAmmo, CallbackInfoReturnable cir)。逻辑：cir 原值 true → return；self.useInventoryAmmo(gun) false → return（非弹链，查询不适用）；self.useDummyAmmo(gun) true → return（dummy 封闭体系，箱弹救不了枪内虚拟计数）；否则 cir.setReturnValue(AmmoSourceResolver.hasAmmoInCrates(shooter, gun))。
+  - 新增 sf$crateReloadFallback —— @Inject(method = "canReload(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)Z", at = @At("RETURN"), remap = false, cancellable = true)，handler 参数 (LivingEntity shooter, ItemStack gunItem, CallbackInfoReturnable cir)。逻辑：cir 原值 true → return；self.useInventoryAmmo(gunItem) true → return（弹链禁换弹）；self.useDummyAmmo(gunItem) true → return；TimelessAPI.getCommonGunIndex(self.getGunId(gunItem)) 空 → return（数据缺失）；self.getCurrentAmmoCount(gunItem) >= AttachmentDataUtils.getAmmoCountWithAttachment(gunItem, gunIndex.getGunData()) → return（满弹）；否则 setReturnValue(hasAmmoInCrates(shooter, gunItem))。
+  - self 统一 ((AbstractGunItem)(Object)this) 强转直调。useInventoryAmmo 定义于 AbstractGunItem:399；useDummyAmmo / getDummyAmmoAmount / getGunId / getCurrentAmmoCount 为 IGun 接口成员（IGun:84 / :89 / :130 / :217）。新增 import：com.tacz.guns.api.TimelessAPI、com.tacz.guns.resource.index.CommonGunIndex、com.tacz.guns.util.AttachmentDataUtils。类头 javadoc（现 L24-27 的 @Redirect 描述）同步改写为 Inject-RETURN 兜底 + taczaddon 并集共存说明。
+- AmmoSourceResolver 新增静态方法（新增 import：com.tacz.guns.api.item.IAmmo / IAmmoBox；走 AmmoSourceRegistry.getNearbyAmmoBoxes，天然继承 OPEN 态过滤与 config 半径）：
+  public static boolean hasAmmoInCrates(LivingEntity shooter, ItemStack gun) {
+      for (IItemHandler box : AmmoSourceRegistry.getNearbyAmmoBoxes(shooter, SustainedFireConfig.AMMO_CRATE_RADIUS.get())) {
+          for (int i = 0; i < box.getSlots(); i++) {
+              ItemStack stack = box.getStackInSlot(i);
+              if (stack.getItem() instanceof IAmmo ammo && ammo.isAmmoOfGun(gun, stack)) { return true; }
+              if (stack.getItem() instanceof IAmmoBox ammoBox && ammoBox.isAmmoBoxOfGun(gun, stack)) { return true; }
+          }
+      }
+      return false;
+  }
+  纯箱侧查询——背包侧已由原方法（或 taczaddon 扩展后的视图）查过，不重复。
+- 消耗侧三处不动（与 taczaddon 注入点不相交 / 同型可叠加）：MKGSA:541 与 LES:268 的 consumeAmmoFromPlayer @Redirect、handleShootHeat @Redirect、useInventoryAmmo TAIL @Inject。
+- 验收链：build 绿 → commit → 新 jar 覆盖部署测试实例（当前部署为 redirect 版，与 taczaddon 双装必崩，必须替换）→ taczaddon 保持启用双装启动不崩 = 对撞解除实证 → 跑七项测试清单。
 ## 七、架构定案
 核心=弹药源解析器 AmmoSourceResolver：CombinedInvWrapper(玩家背包+装备的SB背包+周围弹药箱BE)，优先级可配置。
 - mixin注入点3处 @ModifyVariable 方法头换handler：AbstractGunItem.hasInventoryAmmo、MKGSA.consumeAmmoFromPlayer(:541)、LES.consumeAmmoFromPlayer(:268双参签名)。
