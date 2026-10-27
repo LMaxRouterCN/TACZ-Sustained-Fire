@@ -59,6 +59,15 @@ mixin注入点均为最小拦截，不复制TACZ代码。
 - MakeGunEnchantableMixin全在Item本体：isEnchantable（幂等可共存）/getEnchantmentValue/canApplyAtEnchantingTable（委托GunEnchantmentHooks）→ 附魔获取主走铁砧书+我们附魔类override canEnchant。
 - MixinModernKineticGunScriptAPI空壳、MixinAbstractGunItem只动dropAllAmmo、MixinModernKineticGunItem只动doMelee/doPerLivingHurt → 与我们全部注入点零冲突。
 
+### 6.5 测试实例共存 mod 冲突取证（2026-10-27，javap 字节码+源码实证）
+- 环境实况（mods 共 464 jar）：TACZ 系在场 tacz-1.1.8-hotfix2 / taczaddon-1.1.8.2-fix（第三方 Mafuyu404，GPL-3.0，35 mixin，modid=taczaddon）/ packagedtacz-1.0.4（纯内容包，mixin 数组为空，零冲突）；SB 系 sophisticatedbackpacks 3.26.14 / sophisticatedcore 1.5.15 / sophisticatedstorage 1.5.9。
+- 对撞实锤：taczaddon 的 AbstractGunItemMixin(canReload) 与 AbstractGunItemInventoryFeedMixin(hasInventoryAmmo) 均 @Redirect getCapability 调用点，与我们同两处 @Redirect（TACZ 源码 L147/L432，各仅一个调用点，无 ordinal 钻缝）正面冲突。@Redirect 对调用点独占，双装后加载方 Critical Injection Failure。plugin 不救场（TaczContractRegistry v1_1_8 binding 完整注册，版本门必过）；config 无相关开关；第三方 jar 无法要求 rebuild。
+- 方案面板（待 max 拍板后实施）：
+  - C（推荐）：我们两处 @Redirect 迁移为 @Inject(RETURN) 兜底式——原方法 false 且非不可救出口（非弹链/弹链禁换弹/dummy 耗尽/gunIndex 缺失/满弹）时查弹药箱救活。布尔语义等价（背包 OR 箱）；注入位置为 return 指令，与任何 @Redirect（INVOKE 指令）正交，双装与 taczaddon 并集共存（他们管背包侧，我们兜箱侧）；背包有弹高频路径短路（不建 CombinedInvWrapper），性能净赚。重查上游条件用 (AbstractGunItem)(Object)this 直调，成本与上游既有调用同量级。
+  - B（临时，与 C 可先后）：测试时改名 taczaddon jar 后缀隔离，先测 M6。
+  - 已弃：D（rebuild 第三方 jar）；E（全局覆盖 Player.getCapability，爆炸半径不可控）。
+- 历史遗留缺口（测试项⑦）：GunAnimationStateContext:168 hasAmmoToConsume 我们从未覆盖——弹链枪「背包空+箱有弹」时动画状态机判定可能不同步；taczaddon 已 mixin 此方法（管背包侧），箱侧无人管。
+- 功能情报：taczaddon 的 BackpackAmmoService（createQueryHandler/consumeBackpackAmmo）为装备背包供弹实现，与本项目弹链/弹药箱同功能空间；测试实例内行为观察须分离变量归因（尤其 HUD 弹药显示，其 GunHudOverlayMixin @ModifyArg 改写 handleInventoryAmmo）。
 ## 七、架构定案
 核心=弹药源解析器 AmmoSourceResolver：CombinedInvWrapper(玩家背包+装备的SB背包+周围弹药箱BE)，优先级可配置。
 - mixin注入点3处 @ModifyVariable 方法头换handler：AbstractGunItem.hasInventoryAmmo、MKGSA.consumeAmmoFromPlayer(:541)、LES.consumeAmmoFromPlayer(:268双参签名)。
