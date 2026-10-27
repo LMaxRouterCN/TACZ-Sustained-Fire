@@ -29,6 +29,8 @@ public final class ModCreativeTabs {
                     // 标签页图标：附魔书（本模组核心内容即附魔）
                     .icon(() -> new ItemStack(Items.ENCHANTED_BOOK))
                     .displayItems((params, output) -> {
+                        // 弹药箱方块（里程碑 6；GUI 与供弹在后续 step 接入）
+                        output.accept(ModItems.AMMO_CRATE.get());
                         // 全部 5 个附魔各一本满级书
                         putMaxBook(output, ModEnchantments.COOLING_DEVICE.get());
                         putMaxBook(output, ModEnchantments.AIR_COOLING.get());

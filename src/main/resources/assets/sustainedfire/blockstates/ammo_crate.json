@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "open=false": { "model": "sustainedfire:block/ammo_crate_closed" },
+    "open=true": { "model": "sustainedfire:block/ammo_crate_open" }
+  }
+}

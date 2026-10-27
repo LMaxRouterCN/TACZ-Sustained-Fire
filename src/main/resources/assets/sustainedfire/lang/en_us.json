@@ -9,5 +9,7 @@
   "enchantment.sustainedfire.belt_feed.desc": "Fires directly from inventory ammo (including backpacks and ammo crates). No reloading needed. Treasure enchantment.",
   "enchantment.sustainedfire.preheat.desc": "The hotter the barrel, the faster it fires: up to +40% RPM per level at full heat.",
   "enchantment.sustainedfire.progressive_trigger.desc": "Fire rate ramps up while firing continuously: +15% RPM per level after 3 seconds of sustained fire.",
+  "block.sustainedfire.ammo_crate": "Ammo Crate",
+  "container.sustainedfire.ammo_crate": "Ammo Crate",
   "itemGroup.sustainedfire": "Sustained Fire"
 }

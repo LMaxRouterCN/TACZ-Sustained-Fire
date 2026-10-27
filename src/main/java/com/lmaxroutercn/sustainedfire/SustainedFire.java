@@ -1,11 +1,17 @@
 package com.lmaxroutercn.sustainedfire;
 
 import com.lmaxroutercn.sustainedfire.ammo.FireSessionTracker;
+import com.lmaxroutercn.sustainedfire.config.SustainedFireConfig;
+import com.lmaxroutercn.sustainedfire.registry.ModBlockEntities;
+import com.lmaxroutercn.sustainedfire.registry.ModBlocks;
 import com.lmaxroutercn.sustainedfire.registry.ModCreativeTabs;
 import com.lmaxroutercn.sustainedfire.registry.ModEnchantments;
+import com.lmaxroutercn.sustainedfire.registry.ModItems;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,11 +28,17 @@ public class SustainedFire {
     public SustainedFire() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
 
-        // 附魔注册（方块/物品注册器在对应里程碑建立时再挂）
+        // 注册器：附魔 + 弹药箱三件套（方块 / 物品 / 方块实体，里程碑 6）
         ModEnchantments.ENCHANTMENTS.register(modBus);
+        ModBlocks.BLOCKS.register(modBus);
+        ModItems.ITEMS.register(modBus);
+        ModBlockEntities.BLOCK_ENTITY_TYPES.register(modBus);
 
-        // 创造模式标签页（附魔书一览）
+        // 创造模式标签页（附魔书一览 + 弹药箱）
         ModCreativeTabs.TABS.register(modBus);
+
+        // 通用配置：弹药箱背包可用性 / 查找半径
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SustainedFireConfig.SPEC);
 
         // 连射会话追踪（渐进射速的数据源）：双端各自订阅 GunFireEvent，
         // 物理客户端在单人下同时持有 client/server 两张表，互不串扰
