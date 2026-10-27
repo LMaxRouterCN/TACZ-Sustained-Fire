@@ -1,6 +1,8 @@
 package com.lmaxroutercn.sustainedfire.ammo;
 
 import com.lmaxroutercn.sustainedfire.config.SustainedFireConfig;
+import com.tacz.guns.api.item.IAmmo;
+import com.tacz.guns.api.item.IAmmoBox;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -147,5 +149,25 @@ public final class AmmoSourceResolver {
             }
             return false;
         }
+    }
+    /**
+     * 弹药箱侧纯布尔查询：附近开盖弹药箱内是否存在该枪可用的弹药/弹药盒。
+     * 供 AbstractGunItemMixin 的 Inject-RETURN 兜底调用——背包侧已由原方法
+     * （双装时含第三方扩展视图）查过，此处不重复，只查箱。
+     * [GOAL-PLAN 6.6] taczaddon 对撞迁移：布尔查询由 @Redirect 换源改为兜底。
+     */
+    public static boolean hasAmmoInCrates(LivingEntity shooter, ItemStack gun) {
+        for (IItemHandler box : AmmoSourceRegistry.getNearbyAmmoBoxes(shooter, SustainedFireConfig.AMMO_CRATE_RADIUS.get())) {
+            for (int i = 0; i < box.getSlots(); i++) {
+                ItemStack stack = box.getStackInSlot(i);
+                if (stack.getItem() instanceof IAmmo ammo && ammo.isAmmoOfGun(gun, stack)) {
+                    return true;
+                }
+                if (stack.getItem() instanceof IAmmoBox ammoBox && ammoBox.isAmmoBoxOfGun(gun, stack)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
