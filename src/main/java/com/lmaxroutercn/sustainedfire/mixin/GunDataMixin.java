@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class GunDataMixin {
 
     @Inject(method = "getShootInterval(Lnet/minecraft/world/entity/LivingEntity;Lcom/tacz/guns/api/item/gun/FireMode;Lnet/minecraft/world/item/ItemStack;)J",
-            at = @At("TAIL"), remap = false)
+            at = @At("TAIL"), remap = false, cancellable = true)
     private void sf$shootIntervalBoost(LivingEntity shooter, FireMode fireMode, ItemStack gunStack, CallbackInfoReturnable<Long> cir) {
         if (shooter == null || gunStack == null) {
             return;

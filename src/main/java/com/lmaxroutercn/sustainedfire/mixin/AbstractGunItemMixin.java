@@ -33,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AbstractGunItemMixin {
 
     /** 弹链升级：任意枪械 + belt_feed 附魔 → 视为背包直读（免换弹、禁换弹、HUD 切换） */
-    @Inject(method = "useInventoryAmmo(Lnet/minecraft/world/item/ItemStack;)Z", at = @At("RETURN"), remap = false)
+    @Inject(method = "useInventoryAmmo(Lnet/minecraft/world/item/ItemStack;)Z", at = @At("RETURN"), remap = false, cancellable = true)
     private void sf$beltFeed(ItemStack gun, CallbackInfoReturnable<Boolean> cir) {
         // 原本就是背包直读的枪（FeedType.INVENTORY）无需处理
         if (cir.getReturnValueZ()) {

@@ -94,3 +94,11 @@ tag: API坑, 休眠bat, PokerAgent
 [2026-10-27实证] Forge mod 对 tacz 等第三方mod类做 mixin: 注解必须显式 remap=false(所有指向mod类成员的@Inject/@Redirect/@ModifyArg的method目标、@At(INVOKE)的target、@Shadow字段), 否则Mixin AP 0.8.5报"Unable to locate obfuscation mapping"致命编译错(mod类不在SRG映射内,AP默认remap=true). 例外: MC原生类成员(如ItemStack)不需要且不能加remap=false. Forge patch方法(如LivingEntity.getCapability)名字生产不混淆,@At target加remap=false后字面匹配成立. 另: javac错误输出到stderr日志是GBK编码,PowerShell读需[Text.Encoding]::GetEncoding(936).GetString(ReadAllBytes())否则中文部分显示??????.
 tag: Minecraft, API坑
 <!-- END:021 -->
+<!-- ID:022 -->
+[2026-10-27 TACZ-Sustained-Fire 绿地项目完整跑通] Forge 1.20.1 mod附属(对tacz做mixin)从零到产物jar一晚跑通的完整配方: 1)依赖=tacz/SB/SC三jar丢libs+flatDir+mixinExtras不需要(AP 0.8.5内置够用) 2)tacz源码参照放sustained-fire-ref/供grep签名实证(比反编译快得多) 3)对mod类成员的注解必须remap=false(长期#021) 4)1.20.1易踩API: Enchantment.Rarity是嵌套枚举(顶级Rarity是1.20.5+)、LazyOptional.of收NonNullSupplier、CombinedInvWrapper只收IItemHandlerModifiable[](只读组合需自实现)、Mixin 0.8.5 CallbackInfoReturnable只有Z/I/F/D/S变体+泛型getReturnValue() 5)build自动化: schtasks逃逸框架进程清理(Start-Process必死) 6)javac错误日志是GBK须[Text.Encoding]::GetEncoding(936)解码. 7轮build 6→3→6→2→1→0→SUCCESS,每轮只修实证确认的根因,不盲改.
+tag: 绿地项目, Minecraft, 许可证
+<!-- END:022 -->
+<!-- ID:023 -->
+[2026-10-27 TACZ-Sustained-Fire首崩实证] Mixin @Inject回调里调用cir.setReturnValue()/cancel()必须声明@Inject(..., cancellable = true). 缺失时: 编译期零报错(AP不查), mixin应用时仅日志一条warning, 运行期第一次执行到setReturnValue即抛CancellationException崩溃. 修法: 注解加cancellable=true, 语义不变(TAIL/RETURN处覆盖返回值). 排查特征: crash栈里有CancellationException+handler$xxx帧指认mixin handler. 通用教训: mixin编译通过≠运行可用, 上游戏前应扫一遍所有@Inject是否有setReturnValue/cancel并逐一核对cancellable; @Redirect/@ModifyArg不受此坑影响(无CIR取消语义).
+tag: bug根因，Minecraft, API坑
+<!-- END:023 -->

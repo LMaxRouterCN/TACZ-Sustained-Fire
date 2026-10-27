@@ -1,0 +1,8 @@
+FIXED: AbstractGunItemMixin.java
+FIXED: GunDataMixin.java
+===== 修后 cancellable 验证(应为2处):
+AbstractGunItemMixin.java:L36
+GunDataMixin.java:L33
+===== 全 mixin setReturnValue 调用点核对(应全部落在带cancellable的@Inject内):
+AbstractGunItemMixin.java:L43
+GunDataMixin.java:L62

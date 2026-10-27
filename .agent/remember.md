@@ -1,5 +1,5 @@
-今晚任务: TACZ: Sustained Fire (modid sustainedfire, D:/Documents/mcmod/TACZ-Sustained-Fire). GOAL-PLAN.md v2在项目根. Forge 1.20.1(47.4.10/Java17/official), tacz 1.1.8-hotfix2, SB+SC(已在libs/flatDir). 用户已睡全自动授权. 收尾: 全部干完后schtasks异步跑D:/Desktop/2小时后休眠.bat(不能用Start-Process,会被杀).
-===build#6结果: 1错已修===
-根因: 1.20.1 Forge LazyOptional.of(NonNullSupplier<T>)非of(T)(老版API). 修复(本轮): LazyOptional.of(() -> new CombinedView(...)). 到此全部编译错清零路径: remap=false×6→import修正(Rarity嵌套)→getReturnValue()泛型→CombinedView自实现→NonNullSupplier. build#7本轮已启动(sleep95+jar完整验收: MANIFEST MixinConfigs/mixins.json/lang在位/zh_cn回读).
-===指令通道新实证(重要!)===
-首条cmd块多行(>3行)会触发解析失败"第2行开启
+【热修中】TACZ: Sustained Fire 游戏内首崩(2026-10-27 13:13 AnvilScreen): CancellationException "The call useInventoryAmmo is not cancellable".
+根因: sf$beltFeed/sf$shootIntervalBoost两个@Inject回调调用cir.setReturnValue但注解未写cancellable=true. Mixin运行期才查: 编译不报错,apply时仅日志warning,首次调用即崩. 触发路径: 铁砧悬停已附弹链升级的枪→TACZ tooltip(ClientGunTooltip:154)→useInventoryAmmo→handler→setReturnValue→崩. 铁砧附魔操作本身成功; 不修则服务端射击扣弹路径同样炸(每发都过此方法).
+修复(本轮): 两处@Inject补cancellable=true(全项目仅这2处setReturnValue,已核对)→schtasks重构建→BUILD SUCCESSFUL则新commit(不amend)→删sfsleep+sfbuild计划任务(两个都挂在/sc once /st 23:59,今晚23:59会自动重触发,sfsleep重跑会把用户游戏中机器休眠).
+重测点(装新jar,时间戳应为修复后): 1)悬停带弹链枪不崩 2)射击直读背包弹药(含SB包内弹药) 3)预热/渐进/冷却/风冷照旧 4)无附魔枪tooltip正常.
+后续如再崩: 用户给crash log→直接读文本(这次不是GBK日志是crash report)→优先查mixin运行期问题: @Redirect目标匹配/ACL/@Shadow实际类型.
