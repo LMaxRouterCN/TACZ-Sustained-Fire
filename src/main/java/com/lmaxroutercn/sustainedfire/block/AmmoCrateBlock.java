@@ -6,6 +6,7 @@ import com.lmaxroutercn.sustainedfire.menu.AmmoCrateMenu;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
 import java.util.List;
@@ -113,5 +114,18 @@ public class AmmoCrateBlock extends Block implements EntityBlock {
             stack.getOrCreateTag().putInt(AmmoCrateBlockItem.TAG_FILL, crate.getOccupiedSlots());
         }
         return List.of(stack);
+    }
+    /** 创造中键取箱带内容（与 getDrops 同语义，潜影盒行为补全，关闭[中间键丢内容]残余） */
+    @Override
+    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+        ItemStack stack = super.getCloneItemStack(level, pos, state);
+        // 客户端 BE 的 Items 经 getUpdateTag 同步过，此处读取即同步视图
+        if (level.getBlockEntity(pos) instanceof AmmoCrateBlockEntity crate) {
+            CompoundTag beTag = crate.saveWithFullMetadata();
+            beTag.remove("id");
+            stack.getOrCreateTag().put("BlockEntityTag", beTag);
+            stack.getOrCreateTag().putInt(AmmoCrateBlockItem.TAG_FILL, crate.getOccupiedSlots());
+        }
+        return stack;
     }
 }
