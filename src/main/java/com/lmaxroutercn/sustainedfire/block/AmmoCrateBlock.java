@@ -1,7 +1,14 @@
 package com.lmaxroutercn.sustainedfire.block;
 
 import com.lmaxroutercn.sustainedfire.block.entity.AmmoCrateBlockEntity;
+import com.lmaxroutercn.sustainedfire.item.AmmoCrateBlockItem;
 import com.lmaxroutercn.sustainedfire.menu.AmmoCrateMenu;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -87,5 +94,24 @@ public class AmmoCrateBlock extends Block implements EntityBlock {
     public static void setLid(Level level, BlockPos pos, BlockState state, boolean open) {
         level.setBlock(pos, state.setValue(OPEN, open), Block.UPDATE_ALL);
         level.playSound(null, pos, open ? SoundEvents.BARREL_OPEN : SoundEvents.BARREL_CLOSE, SoundSource.BLOCKS, 0.5F, 1.0F);
+    }
+
+    // ---- 内容随物品（潜影盒语义，max 2026-10-28 拍板） ----
+    // 覆盖 loot table 路径：生存挖掘/爆炸/活塞推毁统一掉落携带 BlockEntityTag 的物品，
+    // 放置时 vanilla 按 "BlockEntityTag" 标准机制自动恢复内容。
+    // 创造破坏镜像原版潜影盒：不掉物品。本覆盖不查 loot table，故无需 loot json。
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        ItemStack stack = new ItemStack(this);
+        BlockEntity be = builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
+        if (be instanceof AmmoCrateBlockEntity crate) {
+            // 与 vanilla ShulkerBoxBlock.getDrops 同构：全量存档去 id 后随物品
+            CompoundTag beTag = crate.saveWithFullMetadata();
+            beTag.remove("id");
+            stack.getOrCreateTag().put("BlockEntityTag", beTag);
+            // 占用槽数缓存：耐久条与物品模型谓词的 O(1) 数据源
+            stack.getOrCreateTag().putInt(AmmoCrateBlockItem.TAG_FILL, crate.getOccupiedSlots());
+        }
+        return List.of(stack);
     }
 }

@@ -170,4 +170,24 @@ public final class AmmoSourceResolver {
         }
         return false;
     }
+    /**
+     * 统计附近开盖弹药箱中可供该枪使用的弹药总数（枚数口径与 HUD 一致）。
+     * [M6 修复 ⑤/③] GunHudOverlay 的 handleCacheCount 在纯背包计数后追加本值：
+     * HUD 显示含箱 + 直读枪弹匣 NBT 回写喂饱 doShoot 连发数。
+     */
+    public static int countAmmoInCrates(LivingEntity shooter, ItemStack gun) {
+        int count = 0;
+        for (IItemHandler box : AmmoSourceRegistry.getNearbyAmmoBoxes(shooter, SustainedFireConfig.AMMO_CRATE_RADIUS.get())) {
+            for (int i = 0; i < box.getSlots(); i++) {
+                ItemStack ammo = box.getStackInSlot(i);
+                if (ammo.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(gun, ammo)) {
+                    count += ammo.getCount();
+                }
+                if (ammo.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(gun, ammo)) {
+                    count += iAmmoBox.getAmmoCount(ammo);
+                }
+            }
+        }
+        return count;
+    }
 }

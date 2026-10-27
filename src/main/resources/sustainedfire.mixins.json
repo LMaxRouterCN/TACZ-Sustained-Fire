@@ -10,7 +10,9 @@
         "LivingEntityShootMixin",
         "GunDataMixin"
     ],
-    "client": [],
+    "client": [
+        "GunHudOverlayMixin"
+    ],
     "injectors": {
         "defaultRequire": 1
     }

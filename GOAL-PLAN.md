@@ -137,3 +137,12 @@ mixin注入点均为最小拦截，不复制TACZ代码。
   - step4：AmmoCrateMenu.stillValid 追加 OPEN 检查——他人/自动化关盖 → 菜单服务端 tick 自动关闭（与「关盖不供弹」对称的 GUI 侧防呆）。
   - 流程修正：黄线框（渲染层视觉指示）非需求清单项，从 step 拆分中降级为可选特性待 max 拍板。
   - 事故记录：step3 首次 build 失败后曾输出虚构的「已提交」叙述，已建立「回执可指认」核查纪律（教训全文见长期记忆）。
+## 2026-10-28 夜间实施（max 睡前授权自主）
+- ③⑤⑦ 同源修复：GunHudOverlayMixin 注入 handleCacheCount（handleInventoryAmmo 调用后、NBT 回写前），
+  把附近弹药箱计数累加进缓存，回写交给原生代码。根因实证：L198 每 50ms 把纯背包数写进
+  直读枪弹匣 NBT——背包空+箱有弹时 NBT=0 → doShoot maxCount=0 循环自取消。
+- 物品侧：AmmoCrateBlockItem（BlockEntityTag 内容随物品 / overrideStackedOnOther 光标交互只认 IAmmo /
+  sf:fill 耐久条 / 谓词 sustainedfire:open 空箱开盖）+ AmmoCrateBlock.getDrops 覆盖 loot 路径
+  （生存/爆炸/活塞掉带内容物品，创造破坏镜像原版潜影盒不掉）。
+- 残余：手动枪机四枪（kar98/m870/m1014/spas12）的 lua hasAmmoToConsume 换弹中断仍为背包口径（belt 场景边缘）；
+  物品模型双态 json 待 max 的 Blockbench 资产确认键名。

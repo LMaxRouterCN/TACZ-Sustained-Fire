@@ -108,4 +108,15 @@ public class AmmoCrateBlockEntity extends BlockEntity {
         super.saveAdditional(tag);
         tag.put("Items", items.serializeNBT());
     }
+
+    /** 已占用槽数：挖掘捕获时写进物品 "sf:fill"（耐久条/模型谓词 O(1) 读） */
+    public int getOccupiedSlots() {
+        int n = 0;
+        for (int i = 0; i < items.getSlots(); i++) {
+            if (!items.getStackInSlot(i).isEmpty()) {
+                n++;
+            }
+        }
+        return n;
+    }
 }

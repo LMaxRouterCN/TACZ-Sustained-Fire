@@ -1,3 +1,9 @@
 {
-  "parent": "sustainedfire:block/ammo_crate_closed"
+  "parent": "sustainedfire:block/ammo_crate_closed",
+  "overrides": [
+    {
+      "predicate": { "sustainedfire:open": 1 },
+      "model": "sustainedfire:block/ammo_crate_open"
+    }
+  ]
 }
