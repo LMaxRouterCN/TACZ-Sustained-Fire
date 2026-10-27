@@ -20,11 +20,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * GunData.getShootInterval（射速节流链终点）：
  * 「预热」与「渐进射速」在返回值 TAIL 处统一施加加成。
  *
- * 选取此方法而非 lerpRPM 的原因：lerpRPM 仅对 hasHeatData 枪生效（:309-310 有守卫），
+ * 选取此方法而非 lerpRPM 的原因：lerpRPM 仅对 hasHeatData 枪生效（GunData 内有守卫），
  * 渐进射速必须对全枪生效；预热对无热枪加成自然归零（heatPct=0），语义自洽。
  *
  * 加成换算：rpm *= bonus 等价于 interval /= bonus（interval = 60_000 / rpm）。
  * 调用方（LES 服务端 / MKGSA 脚本 / 客户端动画上下文）全部经此方法，一处注入全端生效。
+ *
+ * 已知天花板：TACZ 客户端射击入口为 tick 驱动（ShootKey 每 tick 判定一次）
+ * + shoot() 内 coolDown >= 50ms 门槛 + GunData 内部 Mth.clamp(rpm, 1, 1200)，
+ * 三者共同决定实际射速上限 = 1200 rpm（每 tick 一发）。
+ * 对原始 rpm 已顶格的枪（如转管机枪），本加成无感知——引擎限制，非本模组 bug。
  */
 @Mixin(GunData.class)
 public class GunDataMixin {
@@ -53,7 +58,11 @@ public class GunDataMixin {
         // 「渐进射速」：连射 ramp 系数 × 等级加成（读端与查询方所在端一致：客户端表/服务端表）
         int progressiveLevel = EnchantmentHelper.getItemEnchantmentLevel(ModEnchantments.PROGRESSIVE_TRIGGER.get(), gunStack);
         if (progressiveLevel > 0) {
-            float ramp = FireSessionTracker.rampFactor(shooter.getUUID(), shooter.level().isClientSide());
+            // 会话按枪械 ID 独立：切枪后新枪从零积累连射（用户实测：原实现跨枪共享连射时长）
+            String gunId = iGun != null ? iGun.getGunId(gunStack).toString() : null;
+            float ramp = gunId != null
+                    ? FireSessionTracker.rampFactor(shooter.getUUID(), gunId, shooter.level().isClientSide())
+                    : 0f;
             bonus += (float) (ProgressiveTriggerEnchantment.PER_LEVEL_BONUS * progressiveLevel) * ramp;
         }
 

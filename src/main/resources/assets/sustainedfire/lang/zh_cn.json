@@ -3,5 +3,11 @@
   "enchantment.sustainedfire.air_cooling": "风冷",
   "enchantment.sustainedfire.belt_feed": "弹链升级",
   "enchantment.sustainedfire.preheat": "预热",
-  "enchantment.sustainedfire.progressive_trigger": "渐进射速"
+  "enchantment.sustainedfire.progressive_trigger": "渐进射速",
+  "enchantment.sustainedfire.cooling_device.desc": "每级减少 10% 单发热量积累，10 级时枪械永不过热。",
+  "enchantment.sustainedfire.air_cooling.desc": "射速越高，单发积累的热量越少；高射速下射击甚至主动散热。",
+  "enchantment.sustainedfire.belt_feed.desc": "射击直接消耗背包弹药（含背包模组与弹药箱），无需换弹。宝藏附魔。",
+  "enchantment.sustainedfire.preheat.desc": "枪身越热射速越快：满热度时每级 +40% 射速。",
+  "enchantment.sustainedfire.progressive_trigger.desc": "持续射击时射速渐增：连续射击 3 秒后每级 +15% 射速。",
+  "itemGroup.sustainedfire": "持续火力"
 }

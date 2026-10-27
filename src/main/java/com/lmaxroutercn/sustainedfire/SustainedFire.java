@@ -1,6 +1,7 @@
 package com.lmaxroutercn.sustainedfire;
 
 import com.lmaxroutercn.sustainedfire.ammo.FireSessionTracker;
+import com.lmaxroutercn.sustainedfire.registry.ModCreativeTabs;
 import com.lmaxroutercn.sustainedfire.registry.ModEnchantments;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -23,6 +24,9 @@ public class SustainedFire {
 
         // 附魔注册（方块/物品注册器在对应里程碑建立时再挂）
         ModEnchantments.ENCHANTMENTS.register(modBus);
+
+        // 创造模式标签页（附魔书一览）
+        ModCreativeTabs.TABS.register(modBus);
 
         // 连射会话追踪（渐进射速的数据源）：双端各自订阅 GunFireEvent，
         // 物理客户端在单人下同时持有 client/server 两张表，互不串扰
