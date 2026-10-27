@@ -1,3 +1,0 @@
-True
-1.21.x
-732e122 fix: 🐛 Fixed unnecessary fluid transfers between linked storage endpoints in the same group

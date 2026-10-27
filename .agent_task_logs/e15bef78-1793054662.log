@@ -1,3 +1,0 @@
-GunDataMixin remap=false 已写入
---- 写后 @Inject 行验证:
-  L32: @Inject(method = "getShootInterval(Lnet/minecraft/world/entity/LivingEntity;Lcom/tacz/guns/api/item/gun/FireMode;Lnet/minecraft/world/item/ItemStack;)J",

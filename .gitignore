@@ -24,3 +24,6 @@ build-err.log
 
 # 依赖 jar 必须提交（flatDir 仓库）
 # libs/ 不忽略
+# PokerAgent framework runtime state (memory/task logs), do not track
+.agent/
+.agent_task_logs/
