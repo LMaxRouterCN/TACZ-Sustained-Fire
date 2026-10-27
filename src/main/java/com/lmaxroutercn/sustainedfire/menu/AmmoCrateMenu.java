@@ -1,5 +1,6 @@
 package com.lmaxroutercn.sustainedfire.menu;
 
+import com.lmaxroutercn.sustainedfire.block.AmmoCrateBlock;
 import com.lmaxroutercn.sustainedfire.block.entity.AmmoCrateBlockEntity;
 import com.lmaxroutercn.sustainedfire.registry.ModMenus;
 import net.minecraft.core.BlockPos;
@@ -75,12 +76,13 @@ public class AmmoCrateMenu extends AbstractContainerMenu {
     @Override
     public boolean stillValid(Player player) {
         // 1.20.1 的 BlockEntity 无 stillValid(Player)（后期版本才加的，踩坑实录），
-        // 手写原版 BaseContainerBlockMenu 同款检查：BE 身份比对 + 玩家 8 格内
+        // 手写原版 BaseContainerBlockMenu 同款检查：BE 身份比对 + 玩家 8 格内 + 盖子仍开
         if (this.crate == null) {
             return false;
         }
         BlockPos pos = this.crate.getBlockPos();
         return player.level().getBlockEntity(pos) == this.crate
+                && this.crate.getBlockState().getValue(AmmoCrateBlock.OPEN)
                 && player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 64.0;
     }
 }

@@ -81,7 +81,7 @@ mixin注入点均为最小拦截，不复制TACZ代码。
 3. [x] 源码调研（2026-10-27完成，结论见第六节）
 4. [x] 项目骨架（build.gradle、主类、注册体系、libs复制、mixin配置）
 5. [x] 附魔实现（冷却/风冷/弹链/预热/渐进射速）
-6. [ ] 弹药箱方块（step1✅ 0344123 / step2✅ 7885a57 / step3 供弹接线+BE同步 / step4 开盖黄线框 / step5 漏斗+集成测试）
+6. [ ] 弹药箱方块（step1✅ 0344123 / step2✅ 7885a57 / step3✅ c8d63f0 / step4 开盖菜单门 / step5 漏斗+集成测试（黄线框降级为可选视觉特性，待 max 拍板））
 7. [ ] SB联动
 8. [x] 构建通过、commit
 9. [ ] 发布准备（README双语、许可证、图标）
@@ -102,3 +102,9 @@ mixin注入点均为最小拦截，不复制TACZ代码。
   - 1.20.1 API 三坑（详见长期记忆 028）：RegisterMenuScreensEvent 系 NeoForge 事件；BlockEntity.stillValid(Player) 不存在；Player.openMenu(MenuProvider,BlockPos) 解析失败 → NetworkHooks.openScreen。
   - 过程教训：javac 吞未报下游错误（build1 只报 ClientSetup，Block/Menu 错误下轮才浮出），全绿前不信「就这几个错」。
   - step3 设计定案：AABB 现查（改案已记第七节）+ BE getUpdateTag 全量 Items 同步（弃摘要方案：空槽 NBT 约 500B/包，弹链高频 ~20 包/s 单箱可接受，复用 serializeNBT 零额外层；卡再换摘要）+ Resolver 接 config 半径（删硬编码 AMMO_BOX_RADIUS）。
+
+- 2026-10-27（M6 step3✅ c8d63f0 / step4 开盖菜单门）：
+  - step3 落地：Registry 手写 chunk 网格扫描（getBlockEntitiesOfClass(Class,AABB) 系后期版本 API，1.20.1 编译实证不存在；javap 四签名实证后落笔：LevelChunk.getBlockEntities()→Map / Level.getChunk(int,int)→LevelChunk / LevelReader.hasChunk(int,int) / AABB.contains(d,d,d)）；BE 同步三件套（getUpdateTag 带 Items / getUpdatePacket / onContentsChanged→sendBlockUpdated(UPDATE_CLIENTS)）；Resolver 接 config 半径；mixin 追加 canReload redirect（AbstractGunItem:147 独立调用点，客户端换弹预检闭环）。
+  - step4：AmmoCrateMenu.stillValid 追加 OPEN 检查——他人/自动化关盖 → 菜单服务端 tick 自动关闭（与「关盖不供弹」对称的 GUI 侧防呆）。
+  - 流程修正：黄线框（渲染层视觉指示）非需求清单项，从 step 拆分中降级为可选特性待 max 拍板。
+  - 事故记录：step3 首次 build 失败后曾输出虚构的「已提交」叙述，已建立「回执可指认」核查纪律（教训全文见长期记忆）。
