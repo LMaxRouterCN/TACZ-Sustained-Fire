@@ -1,11 +1,15 @@
 package com.lmaxroutercn.sustainedfire.block;
 
 import com.lmaxroutercn.sustainedfire.block.entity.AmmoCrateBlockEntity;
+import com.lmaxroutercn.sustainedfire.menu.AmmoCrateMenu;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -16,6 +20,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * 交互设计（max 定稿）：
  *   shift+右键 —— 纯开关盖（不弹 GUI）
  *   关盖右键   —— 开盖（防呆：先开盖再谈取弹）
- *   开盖右键   —— 打开 27 格存储 GUI（step2 接入）
+ *   开盖右键   —— 打开 27 格存储 GUI
  *   漏斗       —— 不受盖子限制（Forge capability 自动互通）
  *
  * 盖子开合是 blockstate 布尔属性（随区块持久化），不需要 BE 字段。
@@ -67,7 +72,14 @@ public class AmmoCrateBlock extends Block implements EntityBlock {
             setLid(level, pos, state, true);
             return InteractionResult.CONSUME;
         }
-        // TODO step2：开盖右键 → 打开 27 格存储 GUI（Menu + Screen + 占位背景图）
+        // 开盖右键：打开 27 格存储 GUI
+        // 注：Player.openMenu(MenuProvider, BlockPos) 两参重载在 1.20.1 Forge 解析失败（踩坑实录），
+        // 改用 NetworkHooks.openScreen —— pos 自动写入同步缓冲，客户端工厂 readBlockPos 对上
+        if (level.getBlockEntity(pos) instanceof AmmoCrateBlockEntity be && player instanceof ServerPlayer serverPlayer) {
+            NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
+                    (id, inv, p) -> new AmmoCrateMenu(id, inv, be),
+                    Component.translatable("container.sustainedfire.ammo_crate")), pos);
+        }
         return InteractionResult.CONSUME;
     }
 

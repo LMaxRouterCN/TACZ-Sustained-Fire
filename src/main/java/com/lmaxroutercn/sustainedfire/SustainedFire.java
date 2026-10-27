@@ -7,6 +7,7 @@ import com.lmaxroutercn.sustainedfire.registry.ModBlocks;
 import com.lmaxroutercn.sustainedfire.registry.ModCreativeTabs;
 import com.lmaxroutercn.sustainedfire.registry.ModEnchantments;
 import com.lmaxroutercn.sustainedfire.registry.ModItems;
+import com.lmaxroutercn.sustainedfire.registry.ModMenus;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -33,6 +34,9 @@ public class SustainedFire {
         ModBlocks.BLOCKS.register(modBus);
         ModItems.ITEMS.register(modBus);
         ModBlockEntities.BLOCK_ENTITY_TYPES.register(modBus);
+
+        // 菜单注册（step2：弹药箱 GUI）
+        ModMenus.MENUS.register(modBus);
 
         // 创造模式标签页（附魔书一览 + 弹药箱）
         ModCreativeTabs.TABS.register(modBus);

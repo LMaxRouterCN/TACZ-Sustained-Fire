@@ -34,6 +34,11 @@ public class AmmoCrateBlockEntity extends BlockEntity {
         }
     };
 
+    /** 对外暴露物品处理器：菜单槽位 / step3 供弹查询共用同一实例 */
+    public IItemHandler getItemHandler() {
+        return items;
+    }
+
     private LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
 
     public AmmoCrateBlockEntity(BlockPos pos, BlockState state) {
