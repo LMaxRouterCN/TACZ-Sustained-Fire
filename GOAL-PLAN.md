@@ -77,13 +77,20 @@ mixin注入点均为最小拦截，不复制TACZ代码。
 1. [x] 定名、需求定稿
 2. [x] 参考源码就位
 3. [x] 源码调研（2026-10-27完成，结论见第六节）
-4. [ ] 项目骨架（build.gradle、主类、注册体系、libs复制、mixin配置）
-5. [ ] 附魔实现（冷却/风冷/弹链/预热/渐进射速）
+4. [x] 项目骨架（build.gradle、主类、注册体系、libs复制、mixin配置）
+5. [x] 附魔实现（冷却/风冷/弹链/预热/渐进射速）
 6. [ ] 弹药箱方块
 7. [ ] SB联动
-8. [ ] 构建通过、commit
+8. [x] 构建通过、commit
 9. [ ] 发布准备（README双语、许可证、图标）
 
 ## 十、运行时状态（agent工作日志）
 - 2026-10-27：项目启动，源码调研开始
 - 2026-10-27 04:00左右：调研完成，GOAL-PLAN v2 重写（本文件），进入骨架搭建阶段
+- 2026-10-27（M5迭代，实测反馈4项→修复3+定案1）：
+  - 附魔desc补全：en/zh 各5条 + itemGroup 键（EnchDesc 类模组可见 tooltip）。
+  - 渐进射速会话按枪独立：FireSessionTracker 键由 shooter 改为 shooter>gunId（GunFireEvent 自带 gunItemStack 提取），修复跨枪共享连射时长；读路径惰性清扫（阈值256条，无轮询）。
+  - 创造模式标签页 ModCreativeTabs：5本满级附魔书，等级引用 getMaxLevel()，零硬编码。
+  - m134渐进无感定案：TACZ 实际射速上限 1200rpm = 每 tick 一发（ShootKey 逐tick判定 + shoot() 内 coolDown>=50ms 硬门槛 + GunData 内 Mth.clamp(rpm,1,1200) 三重决定）。原始 rpm 顶格的枪（转管机枪类）加成被引擎天花板吸收，低 rpm 枪（霰弹枪）加成明显；"接受上限/突破上限"两选项已抛给用户待定。
+  - commit 09787ea，jar 27800B（增量构建 36s）。
+- 2026-10-27（框架坑）：PokerAgent create 指令的路径必须写在指令行内（不能放 code 块首行），否则空路径落工作目录 → Errno13，且失败后队列中止；文件写入改走 exec + WriteAllText（UTF-8 noBOM，中文完整性已验证）。sfbuild schtasks 残留任务已清（防 23:59 空跑构建）。
