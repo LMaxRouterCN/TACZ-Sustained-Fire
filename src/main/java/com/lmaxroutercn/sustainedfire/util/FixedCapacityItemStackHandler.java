@@ -20,6 +20,7 @@ import net.minecraftforge.items.ItemStackHandler;
  * setSize 分支的隐式清空），Items 按 Slot 键回填，越界槽静默跳过
  * （与 vanilla 回填分支同构）。容量迁移（27→36）时旧数据按 Slot 键回填，
  * 无损。序列化端保持 vanilla 格式（照写 Size），对外 NBT 兼容性不变。
+ * 2026-10-29 起具体箱子容器统一经子类 AmmoCrateInventoryHandler（统一过滤）材料化，本类直接实例化点已清零。
  */
 public class FixedCapacityItemStackHandler extends ItemStackHandler {
 

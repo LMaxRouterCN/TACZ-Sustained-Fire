@@ -1,9 +1,11 @@
 package com.lmaxroutercn.sustainedfire.enchantment;
 import net.minecraft.world.item.enchantment.Enchantment.Rarity;
 
+import com.lmaxroutercn.sustainedfire.config.SustainedFireConfig;
+
 /**
- * 弹链升级（belt_feed）：宝藏附魔，仅 1 级。
- * 射击时直接从玩家背包/精妙背包/弹药箱供弹（AmmoSourceResolver），
+ * 弹链升级（belt_feed）：宝藏附魔，默认仅 1 级（config 可调）。
+ * 射击时直接从玩家背包/背包内弹药箱/周围弹药箱供弹（AmmoSourceResolver），
  * 免去换弹动作；canReload 同步禁换弹。
  * 实现点：AbstractGunItem.useInventoryAmmo 尾部分支。
  */
@@ -12,7 +14,7 @@ public class BeltFeedEnchantment extends SustainedFireEnchantment {
     public static final String BELT_FED_KEY = "sf_belt_fed";
 
     public BeltFeedEnchantment() {
-        super(Rarity.RARE, 1);
+        super(Rarity.RARE);
     }
 
     @Override
@@ -31,5 +33,10 @@ public class BeltFeedEnchantment extends SustainedFireEnchantment {
     public boolean isDiscoverable() {
         // 但可出现在战利品箱
         return true;
+    }
+
+    @Override
+    public int getMaxLevel() {
+        return SustainedFireConfig.intOr(SustainedFireConfig.BELT_MAX_LEVEL);
     }
 }

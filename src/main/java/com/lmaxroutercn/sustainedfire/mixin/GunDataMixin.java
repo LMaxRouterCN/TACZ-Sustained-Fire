@@ -52,7 +52,7 @@ public class GunDataMixin {
                     .orElse(0f);
             // 防御性钳制：setHeatAmount 只钳下界，上界溢出时不放大加成
             heatPct = Math.min(Math.max(heatPct, 0f), 1f);
-            bonus += (float) (PreheatEnchantment.PER_LEVEL_BONUS * preheatLevel) * heatPct;
+            bonus += (float) (PreheatEnchantment.perLevelBonus() * preheatLevel) * heatPct;
         }
 
         // 「渐进射速」：连射 ramp 系数 × 等级加成（读端与查询方所在端一致：客户端表/服务端表）
@@ -63,7 +63,7 @@ public class GunDataMixin {
             float ramp = gunId != null
                     ? FireSessionTracker.rampFactor(shooter.getUUID(), gunId, shooter.level().isClientSide())
                     : 0f;
-            bonus += (float) (ProgressiveTriggerEnchantment.PER_LEVEL_BONUS * progressiveLevel) * ramp;
+            bonus += (float) (ProgressiveTriggerEnchantment.perLevelBonus() * progressiveLevel) * ramp;
         }
 
         // 施加加成：interval /= bonus（bonus > 1 时射速加快；两附魔叠加相乘生效）

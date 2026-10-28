@@ -6,8 +6,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.state.BlockState;
 import com.lmaxroutercn.sustainedfire.block.entity.AmmoCrateBlockEntity;
-import com.lmaxroutercn.sustainedfire.util.FixedCapacityItemStackHandler;
-import com.tacz.guns.api.item.IAmmo;
+import com.lmaxroutercn.sustainedfire.util.AmmoCrateInventoryHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Player;
@@ -50,7 +49,7 @@ public class AmmoCrateBlockItem extends BlockItem {
         super(block, properties);
     }
 
-    // ---------- 耐久条：已占槽位 / 27 ----------
+    // ---------- 耐久条：已占槽位 / 36 ----------
 
     @Override
     public boolean isBarVisible(ItemStack stack) {
@@ -97,19 +96,19 @@ public class AmmoCrateBlockItem extends BlockItem {
     }
 
     /**
-     * 供弹对象谓词：光标交互只认 TACZ 弹药（IAmmo）。
-     * [max 拍板] 箱体 GUI/漏斗仍为通用容器；未来扩展收纳范围只改此方法。
+     * 供弹对象谓词：委托 AmmoCrateInventoryHandler.canAccept（统一过滤唯一改点，crateAmmoOnly 配置）。
+     * [max 拍板 2026-10-29] crateAmmoOnly=true 仅收 TACZ 弹药/弹药盒；false 通用容器（原光标侧 IAmmo 硬编码废除，与 crateAmmoOnly=false 矛盾）。
      */
     private static boolean isDepositable(ItemStack stack) {
-        return stack.getItem() instanceof IAmmo;
+        return AmmoCrateInventoryHandler.canAccept(stack);
     }
 
-    /** 取出：顶向下第一组合法弹药，整组（上限一堆）放入被点空格 */
+    /** 取出：顶向下第一格非空内容（取出侧不过滤——能装的自然能取），整组（上限一堆）放入被点空格 */
     private static boolean takeAmmoFromCrate(ItemStack crateStack, Slot slot, Player player) {
         ItemStackHandler handler = loadHandler(crateStack);
         for (int i = 0; i < handler.getSlots(); i++) {
             ItemStack ammo = handler.getStackInSlot(i);
-            if (ammo.isEmpty() || !isDepositable(ammo)) {
+            if (ammo.isEmpty()) {
                 continue;
             }
             ItemStack taken = handler.extractItem(i, ammo.getMaxStackSize(), false);
@@ -143,7 +142,7 @@ public class AmmoCrateBlockItem extends BlockItem {
 
     /** 从物品 BlockEntityTag.Items 恢复一个 36 格容器视图 */
     private static ItemStackHandler loadHandler(ItemStack stack) {
-        ItemStackHandler handler = new FixedCapacityItemStackHandler(AmmoCrateBlockEntity.CONTAINER_SIZE);
+        AmmoCrateInventoryHandler handler = new AmmoCrateInventoryHandler(AmmoCrateBlockEntity.CONTAINER_SIZE);
         CompoundTag beTag = stack.getTagElement("BlockEntityTag");
         if (beTag != null) {
             // 与 AmmoCrateBlockEntity.saveAdditional 写入的 Items 键同构

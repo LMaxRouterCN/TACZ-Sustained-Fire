@@ -15,7 +15,7 @@ import java.util.Map;
 
 /**
  * 创造模式标签页：本模组全部附魔的满级附魔书一览，便于测试与创造模式取用。
- * 附魔等级引用 getMaxLevel()，与各附魔类的 maxLevel 定义零耦合，不重复硬编码。
+ * 附魔等级引用 getMaxLevel()（运行期读 config enchantments.*.maxLevel，注册期不调用）。
  */
 public final class ModCreativeTabs {
     private ModCreativeTabs() {}

@@ -27,3 +27,7 @@ build-err.log
 # PokerAgent framework runtime state (memory/task logs), do not track
 .agent/
 .agent_task_logs/
+
+# agent 构建日志（不入库）
+build_out.log
+build_err.log

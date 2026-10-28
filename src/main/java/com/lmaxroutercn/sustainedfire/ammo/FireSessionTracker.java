@@ -1,5 +1,7 @@
 package com.lmaxroutercn.sustainedfire.ammo;
 
+import com.lmaxroutercn.sustainedfire.config.SustainedFireConfig;
+import com.lmaxroutercn.sustainedfire.enchantment.ProgressiveTriggerEnchantment;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.world.entity.LivingEntity;
@@ -23,12 +25,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * 内存治理：无轮询。会话条目只在「该枪再次开火」时被 compute 更新；
  * 表膨胀超过阈值时，借下一次开火事件做一次全表惰性清扫
  * （ConcurrentHashMap 弱一致迭代，removeIf 安全），长期游玩不泄漏。
+ *
+ * [max 2026-10-29 配置化] 连射中断窗口由硬编码迁入
+ * enchantments.progressive_trigger.burstGapMs（原 BURST_GAP_MS=2000 常量删除）。
  */
 public final class FireSessionTracker {
-    /** 连射中断判定窗口：距上一发超过该时长视为新连射（ms） */
-    public static final long BURST_GAP_MS = 2000;
 
-    /** 惰性清扫触发阈值：表条目超过该数时，下一次开火顺带全表清扫 */
+    /** 惰性清扫触发阈值：表条目超过该数时，下一次开火顺带全表清扫（纯内存卫生，非玩法数值，不进配置） */
     private static final int CLEANUP_THRESHOLD = 256;
 
     /** 连射会话：一次不间断射击的开始与最近一发时间戳 */
@@ -41,6 +44,11 @@ public final class FireSessionTracker {
     private static final Map<String, Session> SERVER_SESSIONS = new ConcurrentHashMap<>();
 
     private FireSessionTracker() {}
+
+    /** 连射中断判定窗口（ms）：距上一发超过该时长视为新连射（config 化） */
+    private static long burstGapMs() {
+        return SustainedFireConfig.intOr(SustainedFireConfig.PROG_BURST_GAP_MS);
+    }
 
     /** GunFireEvent 回调：更新（或开启）该射手 × 该枪的连射会话 */
     public static void onGunFire(GunFireEvent event) {
@@ -57,16 +65,17 @@ public final class FireSessionTracker {
         Map<String, Session> table = event.getLogicalSide().isClient() ? CLIENT_SESSIONS : SERVER_SESSIONS;
         String key = sessionKey(shooter.getUUID(), iGun.getGunId(gunStack).toString());
         long now = System.currentTimeMillis();
+        long burstGap = burstGapMs();
         table.compute(key, (k, prev) -> {
             // 首发或中断超过窗口：新会话；否则延续原会话起点
-            if (prev == null || now - prev.lastShotMs() > BURST_GAP_MS) {
+            if (prev == null || now - prev.lastShotMs() > burstGap) {
                 return new Session(now, now);
             }
             return new Session(prev.burstStartMs(), now);
         });
         // 惰性清扫：表膨胀时才动，正常游玩永不触发
         if (table.size() > CLEANUP_THRESHOLD) {
-            table.values().removeIf(s -> now - s.lastShotMs() > BURST_GAP_MS);
+            table.values().removeIf(s -> now - s.lastShotMs() > burstGap);
         }
     }
 
@@ -87,7 +96,7 @@ public final class FireSessionTracker {
         if (elapsed <= 0) {
             return 0f;
         }
-        return Math.min((float) elapsed / com.lmaxroutercn.sustainedfire.enchantment.ProgressiveTriggerEnchantment.RAMP_UP_TIME_MS, 1f);
+        return Math.min((float) elapsed / ProgressiveTriggerEnchantment.rampUpTimeMs(), 1f);
     }
 
     /** 会话键：射手维度 × 枪械维度（同一把枪才继承连射时长） */

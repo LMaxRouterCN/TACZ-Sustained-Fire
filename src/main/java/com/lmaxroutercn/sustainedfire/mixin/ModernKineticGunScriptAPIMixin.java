@@ -49,7 +49,7 @@ public class ModernKineticGunScriptAPIMixin {
 
     /**
      * 单发热量缩放：perShot * mult
-     * mult = 1 - 0.10*冷却等级 - 0.002*风冷等级*max(0, rpm-600)，下限 -1.0（射击主动散热）
+     * mult = 1 - perLevelReduction*冷却等级 - perRpm*风冷等级*max(0, rpm-thresholdRpm)，下限 floor（数值全部来自 config enchantments 组）
      * 返回负增长时 setHeatAmount 自带 >=0 钳制，无越界风险。
      * getRPM(ItemStack) 已实证（AbstractGunItem:452 / IGun:369 接口声明）。
      */
@@ -62,15 +62,15 @@ public class ModernKineticGunScriptAPIMixin {
         float perShot = heatData.getHeatPerShot();
         // 冷却装置：每级 -10% 热量增速（10 级免过热）
         int coolingLevel = EnchantmentHelper.getItemEnchantmentLevel(ModEnchantments.COOLING_DEVICE.get(), this.itemStack);
-        float mult = 1f - (float) (CoolingDeviceEnchantment.PER_LEVEL_REDUCTION * coolingLevel);
+        float mult = 1f - (float) (CoolingDeviceEnchantment.perLevelReduction() * coolingLevel);
         // 风冷：射速超阈值部分线性减免，允许负值
         int airLevel = EnchantmentHelper.getItemEnchantmentLevel(ModEnchantments.AIR_COOLING.get(), this.itemStack);
         if (airLevel > 0 && this.abstractGunItem != null) {
             // 取当前有效 rpm（getRPM 内含 lerpRPM 修正，与热量联动）
             int rpm = this.abstractGunItem.getRPM(this.itemStack);
-            float overThreshold = Math.max(0, rpm - AirCoolingEnchantment.DEFAULT_THRESHOLD_RPM);
-            mult -= (float) (AirCoolingEnchantment.DEFAULT_PER_RPM * airLevel * overThreshold);
-            mult = Math.max(mult, (float) AirCoolingEnchantment.DEFAULT_FLOOR);
+            float overThreshold = Math.max(0, rpm - AirCoolingEnchantment.thresholdRpm());
+            mult -= (float) (AirCoolingEnchantment.perRpm() * airLevel * overThreshold);
+            mult = Math.max(mult, (float) AirCoolingEnchantment.floor());
         }
         return perShot * mult;
     }

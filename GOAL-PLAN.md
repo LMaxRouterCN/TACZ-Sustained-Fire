@@ -153,3 +153,71 @@ mixin注入点均为最小拦截，不复制TACZ代码。
 - 2026-10-28（M7e）：max 报"tooltip 完全没变"。根因：appendHoverText 读层错误——BlockEntityTag 下 "Items" 是 ItemStackHandler.serializeNBT() 的包装复合标签 {Items:[...], Size:N}（saveAdditional：tag.put("Items", handler.serializeNBT())），而 tooltip 直接 getList("Items") 把包装层当裸列表；vanilla getList 对类型不符的键恒返回空表 → isEmpty 早退 → 聚合行自 M7a 引入起从未显示（M7a 部署后即陷入 GUI 崩溃链，该特性从未被运行时验证，观感与 M7a 之前完全一致）。同一键两种读法一活一死：loadHandler（getCompound("Items")→deserializeNBT）层级正确故光标交互正常。修复：读侧一行补内层 getCompound("Items")；存储格式不动（动则推翻 M7c 兼容链）。病族新种：写侧/读侧 NBT 层级假设不一致（静默失效不崩）——M7a 批次未验证特性的第三处暴露（36 格数据迁移误判 / 标签锚点 / tooltip 读层）。
 - 2026-10-28（M8 视觉批次，六项）：max 验收 M7 全过后提出。①无货不高亮：getNearbyAmmoBoxPositions 加 gun 参数，经新增 AmmoSourceRegistry.containsAmmoForGun（IAmmo.isAmmoOfGun / IAmmoBox.isAmmoBoxOfGun，与消耗侧同 API）过滤；hasAmmoInCrates 同步收敛到该谓词，高亮集合 ≡ 可供弹集合。②建模冻结：手拼 JSON 即最终版（Blockbench 成品管线作废），后续只换贴图。③底面独立贴图 ammo_crate_bottom.png（程序生成：side 调色板噪点 + 深色边框 + 3A4626 加固十字梁）。④破坏粒子紫黑根因：三模型 json 均无 particle 键 → missing texture；closed/open 补 particle=#side（item 模型经 parent 继承）。⑤箱体挖空留壁（壁 2 / 底 2，内腔 12×10×12 深 10）：底板（down=#bottom，up=#inner）+ 四壁（外面 side+cf / 内面 inner / 壁顶 top）+ closed 平盖 [1,12,1]-[15,14,15] / open 翻盖原样；西/东壁 N/S 端面在方块边界暴露必须画（北/南壁 W/E 端面与邻壁共面省略）；翻盖 down 面删除（与壁顶 y=12 共面 z-fighting，原模型遗留）。⑥贴墙透视根因：满格遮挡（无自定义 shape → 邻居贴面剔除）+ 壁顶缝穿透；noOcclusion 退出遮挡链断根。碰撞：SHAPE_BODY（底+四壁）+ closed/open 分派（平盖/翻盖），getShape 覆盖。工具教训：repo 内行尾 CRLF/LF 混存（Registry=CRLF，AmmoCrateBlock/Resolver=LF），多行字符串锚点跨行尾必挂——改用 ReadAllLines 行数组按内容定位，写回按多数派行尾。待验：贴墙无透视 / 粒子绿色 / 无货不高亮 / 碰撞贴合视觉 / 腔内光照不黑。
 - 2026-10-28（M9 朝向+内容物批次，两项+挡）：①朝向：HORIZONTAL_FACING 随玩家视线放置（getStateForPlacement 取 player.getDirection()=眼看方向，绕开 BlockPlaceContext.getHorizontalDirection 的语义不确定性；无玩家上下文退 north），盖立边在玩家对面、开口正对玩家；blockstate 改 multipart 16 部件（closed/open × 4 朝向 y=0/90/180/270 + content×8），y 映射三源实证（furnace/hopper/pink_petals 一致），multipart 多键 when 经 pink_petals（facing+数值）/glow_lichen（6键）/composter（数值键+无条件底座）实证。②内容物抬升（max 提案，堆肥桶式）：LEVEL 0-8，BE.contentLevel=ceil(占用×8/36)（1 格至少 1 级，满 36=8 级与开口齐平）；8 个 content 模型 [2,2,2]-[14,2+lv×1.25,14] 全 bottom 贴图 down 不画（与底板 up 共面），四向对称不旋转；onContentsChanged 跨级才 setBlock(UPDATE_CLIENTS)；放置兜底 BlockItem.place 返回后读 BE 幂等校正（BlockEntityTag 恢复不走 onContentsChanged）。③挡（max 拍板）：内容物参与碰撞——SHAPE_OPEN_ALL[4][9] 预烘焙矩阵（4 朝向×9 级，contentShape 小数高度 Shapes.box double 重载），getShape 查表零分配；closed 不含 content（平盖盖住）。老存档：朝向归北 + level 0 直到下次内容变动（测试服可接受）。工具教训（M9 四连败复盘）：①repo 行尾混存→行数组法 ②记忆文本含字面标签→框架误解析截断（改英文方括号引用）③multipart 候选记忆全错（farmland/hopper/door 实为 variants），全量程序化扫描才可信 ④Yarn/官方 mojmap 命名陷阱：VoxelShapes 是 Yarn 名，官方叫 Shapes；小数高度盒 Shapes.box ⑤-replace 替换串 '`$1' 中反引号=字面字符（单引号串不转义），行首插入字面反引号致 javac 非法字符——缩进提取一律 [regex]::Match(s,"^\s*").Value 纯提取 ⑥验证必须是断言不是展示：写盘后程序化扫描非法字符（反引号/中文方括号）进 fail 判定 ⑦exec "&" 管道调 gradle 可能无限等输出流 EOF（实测卡死 1h 被手动杀）——改 Start-Process 文件重定向 + Wait-Process 硬超时 300s，超时 taskkill 整树；框架每轮杀 daemon 致冷启动，build 环境保持干净（精确杀 gradle 系 java 进程，命令行甄别不误伤）。待验：四向放置盖位/翻盖碰撞同步/填充抬升/跨级即时/带内容放置恢复/关盖隐藏/挡脚/贴墙透视回归/老箱子归北。
+## 十一、M10 SB联动调查留档（2026-10-28 调查闭环，max指示挂起）
+
+### 状态
+挂起。2026-10-29 max 指示："精妙联动先放一边，修现在这玩意"（具体修什么 max 尚未说明，未猜）。调查已全部闭环，随时可复工。
+
+### 需求（max 已拍板）
+做一个精妙背包（SB）升级插件物品：背包装入此升级后，枪械从背包取弹药（装备栏背包作为弹药源）。
+方向修正：非原架构"装备背包无条件供弹"，装升级才生效。
+
+### 核心发现
+1. SB 消耗路径现状=无条件供弹：buildSources 通用展开遍历玩家背包每格查 ITEM_HANDLER，SB 背包经 BackpackItem.initCapabilities(:419) 暴露该 cap，因此现在装 SB 背包射击/换弹就已经从背包扣弹，无升级。M4 通用展开的直接后果，一直活到现在。
+2. M10 实质=两块：
+   - 上门票：buildSources 条件化（SB 背包必须装我们的升级且 enabled 才展开；FALSE 分支必须 continue 跳过，否则条件化是空气）
+   - 补查询侧：hasAmmoInCrates/countAmmoInCrates 只认箱不认 SB 背包——不改则消耗侧能扣弹但预检说没弹，枪不开火。补齐后弹链枪+装升级 SB 背包=备忘录"弹链终极形态"完整落地。
+3. backpackUsable 澄清（长期记忆 040）：它是弹药箱手持形态开关（M6 埋、未接线、远期待办），与 SB 无关，config 不动。处置（删除或保留）待 max 拍板。
+
+### 技术定案
+- 门票谓词：stack → CapabilityBackpackWrapper.BACKPACK_WRAPPER_CAPABILITY → IBackpackWrapper.getUpgradeHandler().getTypeWrappers(我们的TYPE) 非空且任一 isEnabled()。走 UpgradeHandler 缓存（core UpgradeHandler:221/:227），首查后零 NBT 反序列化。
+- 升级物品范本=Everlasting：Item extends UpgradeItemBase<Wrapper> + 静态 UpgradeType<Wrapper>(Wrapper::new) + UPGRADE_CONFLICT_DEFINITIONS 自冲突（同类型互斥=每背包限1）+ 空壳 Wrapper extends UpgradeWrapperBase。无 Container/Tab（hideSettingsTab=true）。canBeDisabled()=true 白嫖 SB 原生升级开关 UI（enabled NBT）。
+- 升级槽 isItemValid 只要 instanceof IUpgradeItem（UpgradeHandler:58 实证），extends UpgradeItemBase 自动满足，玩家拖进背包 GUI 升级槽即用。
+- 换弹零新增 mixin：defaultReloadFinishing（ModernKineticGunItem:415-450）→ MKGSA.consumeAmmoFromPlayer(:541) → 现有 @Redirect 已在，背包源进 buildSources 后自动覆盖。
+- Inception 嵌套免费：getInventoryForInputOutput 内部已展开子背包（InceptionInventoryHandler:50），顶层装门票=嵌套树全可见，零代码。
+- 条件注册：主类构造器 if(ModList.isLoaded("sophisticatedbackpacks")) SbCompat.init(modEventBus)，DeferredRegister 只在 SB 在场时挂；创造标签页 displayItems 回调判 null。SB 未装时整个物品不注册（需求 7）。
+- 隔离结构：compat/sb/SbCompat（门面，零 SB import）+ compat/sb/SbCompatImpl（持有全部 SB 引用，SB 在场才首次类加载）。isAmmoUpgradedBackpack 三态：TRUE 装了且 enabled / FALSE 是 SB 背包没装 / NULL 不是 SB 背包。
+- 谓词复用：AmmoSourceRegistry.containsAmmoForGun（M8 已收敛）。SB 侧不新增弹药匹配逻辑（max 防重复红线）。
+
+### 接线面（三链路一个节点）
+- 消耗链：MKGSA:541 / LES:268 @Redirect → getCombinedSources → buildSources 条件化
+- 预检链：sf$crateAmmoFallback / sf$crateReloadFallback → hasAmmoInCrates（拟扩为 SB背包 OR 箱）
+- HUD链：GunHudOverlayMixin → countAmmoInCrates（拟扩同上）
+
+### 风险
+- getInventoryForInputOutput 返回 filtered 视图（InventoryIOHandler.getFilteredItemHandler）：玩家配了 filter 升级可能挡提取。默认无 filter 全通过，实现后实测。
+- Impl 的 SB import 泄漏到通用代码路径 = 运行时 NoClassDefFoundError，code review 重点盯。
+
+### 待拍板决策点（复工时）
+1. 供弹覆盖范围：a) 主背包36格（现状） b) +副手 c) +胸甲槽穿戴。倾向 c，成本一次性。
+2. 物品命名：id 提案 sustainedfire:ammo_feed_upgrade，中文名待定（供弹插件/弹链供弹器）。
+3. 配方：倾向测试期先不给（创造获取，everlasting 本身也没配方），发布前再定。
+4. 测试隔离：taczaddon 的 BackpackAmmoService 无条件背包供弹会污染"没装升级不供弹"验收，验收前改名其 jar 隔离（方案 B 先例），验完恢复。
+
+### 工作量
+step1 骨架+物品+条件注册+资源（占位贴图走 System.Drawing 先例）→ step2 三链路接线 → build 部署。约 M6 前半量级，比 M9 轻。
+## 十二、M11 三连任务+附魔数值配置化（2026-10-29 凌晨，max 睡前授权自主，已完成）
+
+### 状态
+完成。build 通过（compileJava 修一处 import 后 0 错误，仅 4 条原有 deprecation 警告），jar 已部署测试实例，休眠计划已挂（AutoHibernate2h，2h 后 shutdown /h）。
+
+### 三个任务（max 睡前口述，全部落地）
+1. **supply.expandContainerItems（默认 false）**：供弹时是否展开背包内物品自带容器（精妙背包等一切暴露 ITEM_HANDLER 的物品）。闸关 = SB 完全不供弹（max 已确认断供后果）。M10 的"装升级才供弹"前半段提前达成，升级物品落地后改为检测该物品。
+2. **ammo_crate.backpackUsable（默认 false）**：背包内弹药箱物品作为弹药源。新类 InInventoryCrateHandler 持 ItemStack 活引用，BlockEntityTag.Items 读写 + sf:fill 缓存同步（耐久条/开盖谓词跟随）。count==1 守卫（多叠 NBT 写回无法定位目标）。扫描 inv.items 36 格（盔甲/副手刻意排除，留 M10 复工拍板）。查询侧 hasAmmoInCrates / countAmmoInCrates 与消耗侧同步接线（预检坑预防）。
+3. **ammo_crate.crateAmmoOnly（默认 false）**：统一过滤，新类 AmmoCrateInventoryHandler.isItemValid 作为唯一准入判定，BE handler / Menu 防御壳 / BlockItem 光标视图 / 漏斗全部走它。光标取出侧改为"第一格非空"（取出不过滤——能装的自然能取，修复原硬编码 IAmmo 与 false 矛盾）。
+
+### 附魔数值配置化（同晚追加任务）
+五附魔全部数值进 config：maxLevel ×5、cooling perLevelReduction、air thresholdRpm / perRpm / floor、preheat perLevelBonus、progressive perLevelBonus / rampUpTimeMs / burstGapMs（FireSessionTracker 同步改）。费用曲线 costBase / costStep / costSpan 全附魔共享。附魔类常量删除改静态方法，注册期不读 config（intOr / doubleOr / booleanOr 兜底默认值，COMMON 未加载不炸——CreativeTabs 的 getMaxLevel 即走此路径）。
+
+### javap 实证纠正（重要，推翻此前假设）
+Forge 47.4.10 字节码实证：ItemStackHandler.insertItem **首步调用 isItemValid**（false 原样退回）；SlotItemHandler.mayPlace 委托 handler.isItemValid。因此过滤只需一个 isItemValid 覆写点，四入口（漏斗自动化 / GUI 手动 / shift 快速移动 / 光标 insertAll）全覆盖。此前"insertItem 不查 isItemValid、漏斗需另覆写 insertItem"的判断是错的。
+
+### 已知代价与观察点
+- InInventoryCrateHandler 每发弹一次 36 格 NBT 序列化 + 反序列化（主线程 0.1ms 量级），实测若卡再上脏标记/延迟写回。
+- COMMON 配置不跨端同步：多人服需服管保证两端一致（config 类注释已写）。
+
+### 醒来待办
+- HARDCODE-AUDIT.md：B 组 15 项硬编码逐行拍板（A 组 18 键本轮已进 config）
+- 游戏内验证：三开关行为 + 附魔数值改动生效性 + 背包内弹药箱供弹实测性能
+- M10 复工时看十一节；盔甲/副手槽扫描范围在那拍板
+- 版本号 0.1.0 未动，是否随里程碑升级待拍板

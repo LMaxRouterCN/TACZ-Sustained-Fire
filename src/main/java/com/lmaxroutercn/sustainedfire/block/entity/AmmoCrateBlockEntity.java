@@ -2,7 +2,7 @@ package com.lmaxroutercn.sustainedfire.block.entity;
 
 import com.lmaxroutercn.sustainedfire.block.AmmoCrateBlock;
 import com.lmaxroutercn.sustainedfire.registry.ModBlockEntities;
-import com.lmaxroutercn.sustainedfire.util.FixedCapacityItemStackHandler;
+import com.lmaxroutercn.sustainedfire.util.AmmoCrateInventoryHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -37,7 +37,7 @@ public class AmmoCrateBlockEntity extends BlockEntity {
     /** 容器规格：36 格（4 行 × 9 列，2026-10-28 由 27 扩容；NBT 的 Size 非权威，见 FixedCapacityItemStackHandler） */
     public static final int CONTAINER_SIZE = 36;
 
-    private final ItemStackHandler items = new FixedCapacityItemStackHandler(CONTAINER_SIZE) {
+    private final ItemStackHandler items = new AmmoCrateInventoryHandler(CONTAINER_SIZE) {
         @Override
         protected void onContentsChanged(int slot) {
             // 任何槽位变动都标记脏，保证存档
