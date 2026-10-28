@@ -189,7 +189,11 @@ public class AmmoCrateBlockItem extends BlockItem {
         if (tag == null || !tag.contains("BlockEntityTag", Tag.TAG_COMPOUND)) {
             return; // 空箱：不追加任何行
         }
-        ListTag items = tag.getCompound("BlockEntityTag").getList("Items", Tag.TAG_COMPOUND);
+        // [M7e] "Items" 在 BlockEntityTag 下是 ItemStackHandler.serializeNBT() 的包装复合标签
+        // {Items:[...], Size:N}，并非裸物品列表——直接 getList 对复合标签恒返回空表，
+        // 内容聚合行自 M7a 起从未显示过（写侧/读侧层级假设不一致，静默失效不报错）。
+        // 修法与 loadHandler 对齐：先取包装层 getCompound("Items")，再取内层真正的列表。
+        ListTag items = tag.getCompound("BlockEntityTag").getCompound("Items").getList("Items", Tag.TAG_COMPOUND);
         if (items.isEmpty()) {
             return;
         }
