@@ -21,6 +21,10 @@ public class AmmoCrateScreen extends AbstractContainerScreen<AmmoCrateMenu> {
         super(menu, playerInventory, title);
         this.imageWidth = 176;
         this.imageHeight = 186;
+        // 玩家区「物品栏」标签 Y：vanilla 默认锚点对应 27 格布局（imageHeight=168），
+        // M7a 玩家区下移 18px 后默认值落进第 4 行箱格（M7d 事故）。
+        // 公式锚定 imageHeight-94=92（玩家区上沿 102 - 10，vanilla chest 系惯例），高度再动自动跟随。
+        this.inventoryLabelY = this.imageHeight - 94;
     }
 
     @Override
