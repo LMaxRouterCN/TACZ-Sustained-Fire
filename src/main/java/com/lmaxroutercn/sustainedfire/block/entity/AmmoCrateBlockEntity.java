@@ -1,6 +1,7 @@
 package com.lmaxroutercn.sustainedfire.block.entity;
 
 import com.lmaxroutercn.sustainedfire.registry.ModBlockEntities;
+import com.lmaxroutercn.sustainedfire.util.FixedCapacityItemStackHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -18,7 +19,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * 弹药箱方块实体：27 格通用容器（与箱子同规格）。
+ * 弹药箱方块实体：36 格通用容器（4 行 × 9 列）。
  *
  * 只暴露 ItemStackHandler capability：
  *   - 漏斗等自动化 → Forge 原生路径直接互通（不受盖子限制，max 定稿）
@@ -32,10 +33,10 @@ import org.jetbrains.annotations.Nullable;
  * 两条通道（menu 广播 / BE 更新包）最终写入同一个客户端 ItemStackHandler，不冲突。
  */
 public class AmmoCrateBlockEntity extends BlockEntity {
-    /** 容器规格：27 格（对齐原版箱子） */
+    /** 容器规格：36 格（4 行 × 9 列，2026-10-28 由 27 扩容；NBT 的 Size 非权威，见 FixedCapacityItemStackHandler） */
     public static final int CONTAINER_SIZE = 36;
 
-    private final ItemStackHandler items = new ItemStackHandler(CONTAINER_SIZE) {
+    private final ItemStackHandler items = new FixedCapacityItemStackHandler(CONTAINER_SIZE) {
         @Override
         protected void onContentsChanged(int slot) {
             // 任何槽位变动都标记脏，保证存档

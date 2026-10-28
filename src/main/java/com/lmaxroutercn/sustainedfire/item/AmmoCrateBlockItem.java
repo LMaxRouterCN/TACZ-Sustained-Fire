@@ -1,6 +1,7 @@
 package com.lmaxroutercn.sustainedfire.item;
 
 import com.lmaxroutercn.sustainedfire.block.entity.AmmoCrateBlockEntity;
+import com.lmaxroutercn.sustainedfire.util.FixedCapacityItemStackHandler;
 import com.tacz.guns.api.item.IAmmo;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
@@ -137,7 +138,7 @@ public class AmmoCrateBlockItem extends BlockItem {
 
     /** 从物品 BlockEntityTag.Items 恢复一个 36 格容器视图 */
     private static ItemStackHandler loadHandler(ItemStack stack) {
-        ItemStackHandler handler = new ItemStackHandler(AmmoCrateBlockEntity.CONTAINER_SIZE);
+        ItemStackHandler handler = new FixedCapacityItemStackHandler(AmmoCrateBlockEntity.CONTAINER_SIZE);
         CompoundTag beTag = stack.getTagElement("BlockEntityTag");
         if (beTag != null) {
             // 与 AmmoCrateBlockEntity.saveAdditional 写入的 Items 键同构

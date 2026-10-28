@@ -3,6 +3,7 @@ package com.lmaxroutercn.sustainedfire.menu;
 import com.lmaxroutercn.sustainedfire.block.AmmoCrateBlock;
 import com.lmaxroutercn.sustainedfire.block.entity.AmmoCrateBlockEntity;
 import com.lmaxroutercn.sustainedfire.registry.ModMenus;
+import com.lmaxroutercn.sustainedfire.util.FixedCapacityItemStackHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -10,7 +11,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class AmmoCrateMenu extends AbstractContainerMenu {
     public AmmoCrateMenu(int id, Inventory playerInventory, @Nullable AmmoCrateBlockEntity crate) {
         super(ModMenus.AMMO_CRATE.get(), id);
         this.crate = crate;
-        IItemHandler handler = (crate != null) ? crate.getItemHandler() : new ItemStackHandler(AmmoCrateBlockEntity.CONTAINER_SIZE);
+        IItemHandler handler = (crate != null) ? crate.getItemHandler() : new FixedCapacityItemStackHandler(AmmoCrateBlockEntity.CONTAINER_SIZE);
         // 箱内 36 格：4 行 9 列（首行坐标与原版单箱一致）
         for (int row = 0; row < 4; row++) {
             for (int col = 0; col < 9; col++) {
