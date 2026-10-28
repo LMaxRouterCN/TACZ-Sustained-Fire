@@ -6,6 +6,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import com.tacz.guns.api.item.IAmmo;
+import com.tacz.guns.api.item.IAmmoBox;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.items.IItemHandler;
 
@@ -71,6 +74,24 @@ public final class AmmoSourceRegistry {
     }
 
     /**
+     * 谓词：单个容器内是否存在该枪可用的弹药/弹药盒。
+     * [M8] 无货不高亮：供弹判定侧（hasAmmoInCrates）与黄线框侧（getNearbyAmmoBoxPositions）
+     * 共用本谓词——匹配口径 = TACZ 消耗侧原生 IAmmo.isAmmoOfGun / IAmmoBox.isAmmoBoxOfGun，
+     * "高亮的箱子"与"判定有货的箱子"严格同源，永不漂移。
+     */
+    public static boolean containsAmmoForGun(IItemHandler box, ItemStack gun) {
+        for (int i = 0; i < box.getSlots(); i++) {
+            ItemStack stack = box.getStackInSlot(i);
+            if (stack.getItem() instanceof IAmmo ammo && ammo.isAmmoOfGun(gun, stack)) {
+                return true;
+            }
+            if (stack.getItem() instanceof IAmmoBox ammoBox && ammoBox.isAmmoBoxOfGun(gun, stack)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
      * 获取 shooter 周围有效半径内的弹药箱物品处理器（已按开盖状态过滤）。
      *
      * @param shooter 射手（取位置与所在维度）
@@ -86,18 +107,21 @@ public final class AmmoSourceRegistry {
     }
 
     /**
-     * 供弹范围内（OPEN）弹药箱坐标列表：黄线框渲染用（2026-10-28，M7b）。
-     * 与 getNearbyAmmoBoxes 走同一 collectNearbyCrates 核心，
-     * 保证"被高亮的箱子"与"实际供弹的箱子"严格同源。
+     * 供弹范围内（OPEN 且对该枪有可用弹药）的弹药箱坐标列表：黄线框渲染用（M7b 引入，M8 加弹药过滤）。
+     * 与 getNearbyAmmoBoxes / hasAmmoInCrates 走同一 collectNearbyCrates 核心 + containsAmmoForGun 谓词，
+     * 保证"被高亮的箱子"与"实际可供弹的箱子"严格同源——空箱不高亮，装错弹药的箱也不高亮。
      *
      * @param shooter 射手（取位置与所在维度）
      * @param radius 查找半径（格，来自 config）
+     * @param gun 主手枪械（弹药匹配目标）
      * @return 弹药箱 BlockPos 列表（immutable，新建列表）
      */
-    public static List<BlockPos> getNearbyAmmoBoxPositions(LivingEntity shooter, double radius) {
+    public static List<BlockPos> getNearbyAmmoBoxPositions(LivingEntity shooter, double radius, ItemStack gun) {
         List<BlockPos> result = new ArrayList<>();
         for (AmmoCrateBlockEntity crate : collectNearbyCrates(shooter, radius)) {
-            result.add(crate.getBlockPos().immutable());
+            if (containsAmmoForGun(crate.getItemHandler(), gun)) {
+                result.add(crate.getBlockPos().immutable());
+            }
         }
         return result;
     }

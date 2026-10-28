@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
@@ -25,7 +26,8 @@ import java.util.List;
 /**
  * 黄线框（max 定案方案 A，2026-10-28）：手持 tacz 枪械时，为供弹半径内
  * 开盖弹药箱绘制黄色轮廓。所见即供弹——扫描走 AmmoSourceRegistry 同一
- * 口径（AABB + OPEN 过滤），服务端实际供弹的就是被高亮的箱子，不多不少。
+ * 口径（AABB + OPEN 过滤），M8 起加「箱内含该枪可用弹药」过滤（无货不高亮），
+ * 服务端实际供弹的就是被高亮的箱子，不多不少。
  * 关盖箱不供弹，因此不高亮；如需"范围内但关盖"的弱提示（灰框等），
  * 属独立视觉层，另议。
  *
@@ -86,7 +88,9 @@ public final class AmmoCrateOutlineRenderer {
             return; // 收枪沿：清空即完成
         }
         // 半径实时读 config（COMMON 配置双端共享）：改配置即时生效，无需重登
-        HIGHLIGHTED.addAll(AmmoSourceRegistry.getNearbyAmmoBoxPositions(player, SustainedFireConfig.AMMO_CRATE_RADIUS.get()));
+        // [M8] 无货不高亮：传主手枪做弹药过滤，只有装着该枪可用弹药的开盖箱才高亮
+        ItemStack gun = player.getMainHandItem();
+        HIGHLIGHTED.addAll(AmmoSourceRegistry.getNearbyAmmoBoxPositions(player, SustainedFireConfig.AMMO_CRATE_RADIUS.get(), gun));
     }
 
     // ---------- 渲染侧：纯消费缓存 ----------

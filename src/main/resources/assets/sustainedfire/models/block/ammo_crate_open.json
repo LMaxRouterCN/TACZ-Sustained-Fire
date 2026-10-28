@@ -3,18 +3,56 @@
   "textures": {
     "side": "sustainedfire:block/ammo_crate_side",
     "top": "sustainedfire:block/ammo_crate_top",
-    "inner": "sustainedfire:block/ammo_crate_inner"
+    "bottom": "sustainedfire:block/ammo_crate_bottom",
+    "inner": "sustainedfire:block/ammo_crate_inner",
+    "particle": "sustainedfire:block/ammo_crate_side"
   },
   "elements": [
     {
-      "from": [0, 0, 0], "to": [16, 12, 16],
+      "from": [0, 0, 0], "to": [16, 2, 16],
       "faces": {
-        "down": { "texture": "#side", "cullface": "down" },
+        "down": { "texture": "#bottom", "cullface": "down" },
         "up": { "texture": "#inner" },
         "north": { "texture": "#side", "cullface": "north" },
         "south": { "texture": "#side", "cullface": "south" },
         "west": { "texture": "#side", "cullface": "west" },
         "east": { "texture": "#side", "cullface": "east" }
+      }
+    },
+    {
+      "from": [0, 2, 0], "to": [2, 12, 16],
+      "faces": {
+        "west": { "texture": "#side", "cullface": "west" },
+        "east": { "texture": "#inner" },
+        "north": { "texture": "#side", "cullface": "north" },
+        "south": { "texture": "#side", "cullface": "south" },
+        "up": { "texture": "#top" }
+      }
+    },
+    {
+      "from": [14, 2, 0], "to": [16, 12, 16],
+      "faces": {
+        "west": { "texture": "#inner" },
+        "east": { "texture": "#side", "cullface": "east" },
+        "north": { "texture": "#side", "cullface": "north" },
+        "south": { "texture": "#side", "cullface": "south" },
+        "up": { "texture": "#top" }
+      }
+    },
+    {
+      "from": [2, 2, 0], "to": [14, 12, 2],
+      "faces": {
+        "north": { "texture": "#side", "cullface": "north" },
+        "south": { "texture": "#inner" },
+        "up": { "texture": "#top" }
+      }
+    },
+    {
+      "from": [2, 2, 14], "to": [14, 12, 16],
+      "faces": {
+        "north": { "texture": "#inner" },
+        "south": { "texture": "#side", "cullface": "south" },
+        "up": { "texture": "#top" }
       }
     },
     {
@@ -24,8 +62,7 @@
         "south": { "texture": "#top" },
         "west": { "texture": "#side" },
         "east": { "texture": "#side" },
-        "up": { "texture": "#side" },
-        "down": { "texture": "#side" }
+        "up": { "texture": "#side" }
       }
     }
   ]

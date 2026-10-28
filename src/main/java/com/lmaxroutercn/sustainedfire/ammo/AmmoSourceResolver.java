@@ -157,15 +157,10 @@ public final class AmmoSourceResolver {
      * [GOAL-PLAN 6.6] taczaddon 对撞迁移：布尔查询由 @Redirect 换源改为兜底。
      */
     public static boolean hasAmmoInCrates(LivingEntity shooter, ItemStack gun) {
+        // [M8] 匹配谓词收敛到 AmmoSourceRegistry.containsAmmoForGun，与黄线框高亮侧同源
         for (IItemHandler box : AmmoSourceRegistry.getNearbyAmmoBoxes(shooter, SustainedFireConfig.AMMO_CRATE_RADIUS.get())) {
-            for (int i = 0; i < box.getSlots(); i++) {
-                ItemStack stack = box.getStackInSlot(i);
-                if (stack.getItem() instanceof IAmmo ammo && ammo.isAmmoOfGun(gun, stack)) {
-                    return true;
-                }
-                if (stack.getItem() instanceof IAmmoBox ammoBox && ammoBox.isAmmoBoxOfGun(gun, stack)) {
-                    return true;
-                }
+            if (AmmoSourceRegistry.containsAmmoForGun(box, gun)) {
+                return true;
             }
         }
         return false;

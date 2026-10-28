@@ -24,5 +24,7 @@ public final class ModBlocks {
             () -> new AmmoCrateBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.METAL)
                     .strength(2.5F, 8.0F)
-                    .sound(SoundType.WOOD)));
+                    .sound(SoundType.WOOD)
+                    // [M8] 挖空箱体不满格：退出满格遮挡链（邻居贴面不再因本方块被剔除，修贴墙透视）
+                    .noOcclusion()));
 }

@@ -28,6 +28,9 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,11 +40,12 @@ import org.jetbrains.annotations.Nullable;
  * 交互设计（max 定稿）：
  *   shift+右键 —— 纯开关盖（不弹 GUI）
  *   关盖右键   —— 开盖（防呆：先开盖再谈取弹）
- *   开盖右键   —— 打开 27 格存储 GUI
+ *   开盖右键   —— 打开 36 格存储 GUI
  *   漏斗       —— 不受盖子限制（Forge capability 自动互通）
  *
  * 盖子开合是 blockstate 布尔属性（随区块持久化），不需要 BE 字段。
- * 静态双模型（closed/open），max 的 Blockbench 成品覆盖同名 json 即生效。
+ * 静态双模型（closed/open）。2026-10-28 建模冻结（max 拍板）：手拼 JSON 即最终版——
+ * 箱体挖空留壁（壁 2px / 底 2px，内腔 12x10x12），后续美术仅换贴图（同名 PNG 覆盖）。
  */
 public class AmmoCrateBlock extends Block implements EntityBlock {
     /** 盖子开合状态（复用原版 OPEN 属性，blockstate json 键为 open=true/false） */
@@ -64,6 +68,26 @@ public class AmmoCrateBlock extends Block implements EntityBlock {
         return new AmmoCrateBlockEntity(pos, state);
     }
 
+    // ---- 碰撞/选择形状（M8 挖空箱体）：底 + 四壁为共通箱体，按开合盖分派 ----
+    /** 箱体（底板 + 四壁）：closed/open 共用，与模型 element 几何一一对应 */
+    private static final VoxelShape SHAPE_BODY = Shapes.or(
+            Block.box(0, 0, 0, 16, 2, 16),    // 底板
+            Block.box(0, 2, 0, 2, 12, 16),   // 西壁
+            Block.box(14, 2, 0, 16, 12, 16), // 东壁
+            Block.box(2, 2, 0, 14, 12, 2),   // 北壁
+            Block.box(2, 2, 14, 14, 12, 16)  // 南壁
+    );
+    /** 关盖：箱体 + 平盖 */
+    private static final VoxelShape SHAPE_CLOSED = Shapes.or(SHAPE_BODY, Block.box(1, 12, 1, 15, 14, 15));
+    /** 开盖：箱体 + 立起的翻盖 */
+    private static final VoxelShape SHAPE_OPEN = Shapes.or(SHAPE_BODY, Block.box(1, 12, 1, 15, 15, 3));
+
+    /** 挖空箱体不满格：选择/碰撞/导航均按实际几何，开放腔口可被准确选中 */
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return state.getValue(OPEN) ? SHAPE_OPEN : SHAPE_CLOSED;
+    }
+
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         // 客户端仅反馈"已处理"让手臂挥动，逻辑全部在服务端
@@ -80,7 +104,7 @@ public class AmmoCrateBlock extends Block implements EntityBlock {
             setLid(level, pos, state, true);
             return InteractionResult.CONSUME;
         }
-        // 开盖右键：打开 27 格存储 GUI
+        // 开盖右键：打开 36 格存储 GUI
         // 注：Player.openMenu(MenuProvider, BlockPos) 两参重载在 1.20.1 Forge 解析失败（踩坑实录），
         // 改用 NetworkHooks.openScreen —— pos 自动写入同步缓冲，客户端工厂 readBlockPos 对上
         if (level.getBlockEntity(pos) instanceof AmmoCrateBlockEntity be && player instanceof ServerPlayer serverPlayer) {
