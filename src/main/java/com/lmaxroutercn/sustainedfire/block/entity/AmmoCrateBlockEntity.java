@@ -1,5 +1,6 @@
 package com.lmaxroutercn.sustainedfire.block.entity;
 
+import com.lmaxroutercn.sustainedfire.block.AmmoCrateBlock;
 import com.lmaxroutercn.sustainedfire.registry.ModBlockEntities;
 import com.lmaxroutercn.sustainedfire.util.FixedCapacityItemStackHandler;
 import net.minecraft.core.BlockPos;
@@ -45,6 +46,12 @@ public class AmmoCrateBlockEntity extends BlockEntity {
             // level==null 挡板：磁盘 load 时 deserializeNBT 也触发本回调，此时无 level
             if (level != null && !level.isClientSide) {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+                // [M9] 内容物抬升：占用槽数跨级才写 level blockstate（同级别变动零方块更新开销）
+                BlockState visualState = getBlockState();
+                int newLevel = contentLevel();
+                if (visualState.getValue(AmmoCrateBlock.LEVEL) != newLevel) {
+                    level.setBlock(getBlockPos(), visualState.setValue(AmmoCrateBlock.LEVEL, newLevel), Block.UPDATE_CLIENTS);
+                }
             }
         }
     };
@@ -119,5 +126,17 @@ public class AmmoCrateBlockEntity extends BlockEntity {
             }
         }
         return n;
+    }
+
+    /** [M9] 内容物等级：占用槽数 → 0-8（空箱 0，放 1 格至少 1 级，满 36 格 = 8 级与开口齐平）。
+     * 供 onContentsChanged 跨级同步与 BlockItem.place 放置兜底共用（BlockEntityTag 恢复不走 onContentsChanged）。 */
+    public int contentLevel() {
+        int occupied = 0;
+        for (int i = 0; i < getItemHandler().getSlots(); i++) {
+            if (!getItemHandler().getStackInSlot(i).isEmpty()) {
+                occupied++;
+            }
+        }
+        return (int) Math.ceil(occupied * 8.0 / CONTAINER_SIZE);
     }
 }

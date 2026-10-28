@@ -1,5 +1,10 @@
 package com.lmaxroutercn.sustainedfire.item;
 
+import com.lmaxroutercn.sustainedfire.block.AmmoCrateBlock;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.state.BlockState;
 import com.lmaxroutercn.sustainedfire.block.entity.AmmoCrateBlockEntity;
 import com.lmaxroutercn.sustainedfire.util.FixedCapacityItemStackHandler;
 import com.tacz.guns.api.item.IAmmo;
@@ -217,5 +222,23 @@ public class AmmoCrateBlockItem extends BlockItem {
             }
             components.add(Component.literal("  ").append(names.get(e.getKey())).append(" ×" + e.getValue()).withStyle(ChatFormatting.GRAY));
         }
+    }
+    // [M9] 放置兜底：BlockEntityTag 恢复内容不经 onContentsChanged（be.load 直写槽位），
+    // level blockstate 不跟随——place 返回时内容已就绪，读 BE 实时统计幂等校正（已对齐则零开销）。
+    @Override
+    public InteractionResult place(BlockPlaceContext context) {
+        InteractionResult result = super.place(context);
+        if (result.consumesAction()) {
+            Level level = context.getLevel();
+            BlockPos pos = context.getClickedPos();
+            if (level.getBlockEntity(pos) instanceof AmmoCrateBlockEntity crate) {
+                BlockState state = level.getBlockState(pos);
+                int newLevel = crate.contentLevel();
+                if (state.getValue(AmmoCrateBlock.LEVEL) != newLevel) {
+                    level.setBlock(pos, state.setValue(AmmoCrateBlock.LEVEL, newLevel), Block.UPDATE_CLIENTS);
+                }
+            }
+        }
+        return result;
     }
 }

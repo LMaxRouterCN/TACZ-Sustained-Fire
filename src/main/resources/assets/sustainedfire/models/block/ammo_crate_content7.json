@@ -1,0 +1,1 @@
+{"parent": "minecraft:block/block", "textures": {"bottom": "sustainedfire:block/ammo_crate_bottom", "particle": "sustainedfire:block/ammo_crate_side"}, "elements": [{"from": [2, 2, 2], "to": [14, 10.75, 14], "faces": {"up": {"texture": "#bottom"}, "north": {"texture": "#bottom"}, "south": {"texture": "#bottom"}, "west": {"texture": "#bottom"}, "east": {"texture": "#bottom"}}}]}

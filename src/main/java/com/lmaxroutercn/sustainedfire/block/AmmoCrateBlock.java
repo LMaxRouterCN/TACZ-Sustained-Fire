@@ -5,12 +5,14 @@ import com.lmaxroutercn.sustainedfire.item.AmmoCrateBlockItem;
 import com.lmaxroutercn.sustainedfire.menu.AmmoCrateMenu;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -27,6 +29,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -50,22 +54,34 @@ import org.jetbrains.annotations.Nullable;
 public class AmmoCrateBlock extends Block implements EntityBlock {
     /** 盖子开合状态（复用原版 OPEN 属性，blockstate json 键为 open=true/false） */
     public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
+    /** [M9] 水平朝向：放置时取玩家视线方向，盖子立起的一边在玩家对侧（blockstate y 旋转，模型文件不动） */
+    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    /** [M9] 内容物等级（堆肥桶粒度）：0-8 = 内腔填充从无到与开口齐平，由 BE 占用槽数映射（AmmoCrateBlockEntity.contentLevel） */
+    public static final IntegerProperty LEVEL = IntegerProperty.create("level", 0, 8);
 
     public AmmoCrateBlock(Properties properties) {
         super(properties);
         // 默认关盖放置
-        this.registerDefaultState(this.stateDefinition.any().setValue(OPEN, Boolean.FALSE));
+        this.registerDefaultState(this.stateDefinition.any().setValue(OPEN, Boolean.FALSE).setValue(FACING, Direction.NORTH).setValue(LEVEL, 0));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(OPEN);
+        builder.add(OPEN, FACING, LEVEL);
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new AmmoCrateBlockEntity(pos, state);
+    }
+
+    /** [M9] 朝向随玩家视线：盖子立边落在玩家对面（玩家看北 → FACING=NORTH → 盖立北缘，开口正对玩家）。
+     * 取 Entity.getDirection（玩家眼看方向，语义无歧义）；无玩家上下文（发射器放置等）退 north。 */
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction look = context.getPlayer() != null ? context.getPlayer().getDirection() : Direction.NORTH;
+        return this.defaultBlockState().setValue(FACING, look);
     }
 
     // ---- 碰撞/选择形状（M8 挖空箱体）：底 + 四壁为共通箱体，按开合盖分派 ----
@@ -79,13 +95,48 @@ public class AmmoCrateBlock extends Block implements EntityBlock {
     );
     /** 关盖：箱体 + 平盖 */
     private static final VoxelShape SHAPE_CLOSED = Shapes.or(SHAPE_BODY, Block.box(1, 12, 1, 15, 14, 15));
-    /** 开盖：箱体 + 立起的翻盖 */
-    private static final VoxelShape SHAPE_OPEN = Shapes.or(SHAPE_BODY, Block.box(1, 12, 1, 15, 15, 3));
+    /** 开盖：箱体 + 立起的翻盖（M9 随朝向旋转，与 blockstate y 旋转一一对应——盖立边在 FACING 侧） */
+    private static final VoxelShape SHAPE_OPEN_N = Shapes.or(SHAPE_BODY, Block.box(1, 12, 1, 15, 15, 3));
+    private static final VoxelShape SHAPE_OPEN_E = Shapes.or(SHAPE_BODY, Block.box(13, 12, 1, 15, 15, 15));
+    private static final VoxelShape SHAPE_OPEN_S = Shapes.or(SHAPE_BODY, Block.box(1, 12, 13, 15, 15, 15));
+    private static final VoxelShape SHAPE_OPEN_W = Shapes.or(SHAPE_BODY, Block.box(1, 12, 1, 3, 15, 15));
+
+    /** [M9] 开盖碰撞全矩阵 [dirIdx][level]：4 朝向 × 9 级（0=空，1-8 含内容物），类加载预烘焙，getShape 查表 O(1) 零运行时分配 */
+    private static final VoxelShape[][] SHAPE_OPEN_ALL = new VoxelShape[4][9];
+    static {
+        VoxelShape[] bases = {SHAPE_OPEN_N, SHAPE_OPEN_E, SHAPE_OPEN_S, SHAPE_OPEN_W};
+        for (int d = 0; d < 4; d++) {
+            SHAPE_OPEN_ALL[d][0] = bases[d];
+            for (int lv = 1; lv <= 8; lv++) {
+                SHAPE_OPEN_ALL[d][lv] = Shapes.or(bases[d], contentShape(lv));
+            }
+        }
+    }
+
+    /** [M9 挡] 内容物碰撞盒（四向对称）：与视觉模型同几何 [2,2,2]-[14, 2+lv×1.25, 14]，
+     *  小数高度用 Shapes.box 的 double 重载（Block.box 是其 int 包装） */
+    private static VoxelShape contentShape(int lv) {
+        return Shapes.box(2 / 16.0, 2 / 16.0, 2 / 16.0, 14 / 16.0, (2 + lv * 1.25) / 16.0, 14 / 16.0);
+    }
+
+    /** [M9] 朝向 → 矩阵行索引（N=0/E=1/S=2/W=3，与 bases 数组同序） */
+    private static int dirIndex(Direction dir) {
+        return switch (dir) {
+            case EAST -> 1;
+            case SOUTH -> 2;
+            case WEST -> 3;
+            default -> 0; // NORTH
+        };
+    }
 
     /** 挖空箱体不满格：选择/碰撞/导航均按实际几何，开放腔口可被准确选中 */
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return state.getValue(OPEN) ? SHAPE_OPEN : SHAPE_CLOSED;
+        if (!state.getValue(OPEN)) {
+            return SHAPE_CLOSED; // 平盖四向对称，无需旋转
+        }
+        // 翻盖立边在 FACING 侧（与 blockstate y 旋转同构：N=0/E=90/S=180/W=270）；内容物四向对称，按级查表
+        return SHAPE_OPEN_ALL[dirIndex(state.getValue(FACING))][state.getValue(LEVEL)];
     }
 
     @Override
