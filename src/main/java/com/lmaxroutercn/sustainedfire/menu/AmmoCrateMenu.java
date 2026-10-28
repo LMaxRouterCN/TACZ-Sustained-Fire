@@ -15,8 +15,8 @@ import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * 弹药箱菜单：27 格箱子规格，槽位几何与原版单箱完全一致。
- * 槽位编号：0-26 箱 / 27-53 玩家背包 / 54-62 快捷栏。
+ * 弹药箱菜单：36 格规格（4 行 9 列），GUI 高度扩展至 186。
+ * 槽位编号：0-35 箱 / 36-62 玩家背包 / 63-71 快捷栏。
  * 箱格用 SlotItemHandler 包装 BE 的 ItemStackHandler（Forge 标准）。
  */
 public class AmmoCrateMenu extends AbstractContainerMenu {
@@ -28,8 +28,8 @@ public class AmmoCrateMenu extends AbstractContainerMenu {
         super(ModMenus.AMMO_CRATE.get(), id);
         this.crate = crate;
         IItemHandler handler = (crate != null) ? crate.getItemHandler() : new ItemStackHandler(AmmoCrateBlockEntity.CONTAINER_SIZE);
-        // 箱内 27 格：3 行 9 列（坐标与原版单箱一致）
-        for (int row = 0; row < 3; row++) {
+        // 箱内 36 格：4 行 9 列（首行坐标与原版单箱一致）
+        for (int row = 0; row < 4; row++) {
             for (int col = 0; col < 9; col++) {
                 this.addSlot(new SlotItemHandler(handler, row * 9 + col, 8 + col * 18, 18 + row * 18));
             }
@@ -37,12 +37,12 @@ public class AmmoCrateMenu extends AbstractContainerMenu {
         // 玩家背包 3 行
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInventory, 9 + row * 9 + col, 8 + col * 18, 84 + row * 18));
+                this.addSlot(new Slot(playerInventory, 9 + row * 9 + col, 8 + col * 18, 102 + row * 18));
             }
         }
         // 快捷栏
         for (int i = 0; i < 9; i++) {
-            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
+            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 160));
         }
     }
 

@@ -11,5 +11,6 @@
   "enchantment.sustainedfire.progressive_trigger.desc": "持续射击时射速渐增：连续射击 3 秒后每级 +15% 射速。",
   "block.sustainedfire.ammo_crate": "弹药箱",
   "container.sustainedfire.ammo_crate": "弹药箱",
-  "itemGroup.sustainedfire": "持续火力"
+  "itemGroup.sustainedfire": "持续火力",
+  "tooltip.sustainedfire.ammo_crate.more": "……还有 %s 种"
 }

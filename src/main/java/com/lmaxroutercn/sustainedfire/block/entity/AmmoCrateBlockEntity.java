@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AmmoCrateBlockEntity extends BlockEntity {
     /** 容器规格：27 格（对齐原版箱子） */
-    public static final int CONTAINER_SIZE = 27;
+    public static final int CONTAINER_SIZE = 36;
 
     private final ItemStackHandler items = new ItemStackHandler(CONTAINER_SIZE) {
         @Override
@@ -98,7 +98,7 @@ public class AmmoCrateBlockEntity extends BlockEntity {
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        // Items 子标签存 27 格内容（ItemStackHandler 标准 NBT 布局）。
+        // Items 子标签存 36 格内容（ItemStackHandler 标准 NBT 布局）。
         // 同时服务于磁盘存档与 getUpdateTag 客户端同步（handleUpdateTag → load）
         items.deserializeNBT(tag.getCompound("Items"));
     }

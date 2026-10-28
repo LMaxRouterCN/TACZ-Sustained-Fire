@@ -11,6 +11,19 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.registries.ForgeRegistries;
+import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 弹药箱方块物品（里程碑 6 物品侧，max 2026-10-28 拍板）：
@@ -19,9 +32,9 @@ import net.minecraftforge.items.ItemStackHandler;
  *    掉落物品携带 BlockEntityTag，放置时 vanilla 自动恢复（潜影盒语义）。
  * 2. 背包光标交互（对齐 tacz 弹药盒习惯）：手持弹药箱右键弹药格整组收入，
  *    右键空格取出箱内第一组合法弹药。
- * 3. 耐久条 = 已占用槽位 / 27（空箱隐藏，绿色，对齐 tacz 弹药盒观感）。
+ * 3. 耐久条 = 已占用槽位 / 36（空箱隐藏，绿色，对齐 tacz 弹药盒观感）。
  * 4. "sf:fill" 整数 NBT：挖掘捕获与光标交互时写入的占用槽数缓存，
- *    供耐久条与物品模型谓词 sustainedfire:open 做 O(1) 读取，避免每帧反序列化 27 格。
+ *    供耐久条与物品模型谓词 sustainedfire:open 做 O(1) 读取，避免每帧反序列化 36 格。
  */
 public class AmmoCrateBlockItem extends BlockItem {
     /** 占用槽数缓存键（挖掘捕获与光标交互时写入） */
@@ -120,9 +133,9 @@ public class AmmoCrateBlockItem extends BlockItem {
         return true;
     }
 
-    // ---------- 物品 NBT <-> 27 格容器 ----------
+    // ---------- 物品 NBT <-> 36 格容器 ----------
 
-    /** 从物品 BlockEntityTag.Items 恢复一个 27 格容器视图 */
+    /** 从物品 BlockEntityTag.Items 恢复一个 36 格容器视图 */
     private static ItemStackHandler loadHandler(ItemStack stack) {
         ItemStackHandler handler = new ItemStackHandler(AmmoCrateBlockEntity.CONTAINER_SIZE);
         CompoundTag beTag = stack.getTagElement("BlockEntityTag");
@@ -164,5 +177,40 @@ public class AmmoCrateBlockItem extends BlockItem {
 
     private static void playRemoveOneSound(Player player) {
         player.playSound(SoundEvents.BUNDLE_REMOVE_ONE, 0.8F, 0.8F + player.level().getRandom().nextFloat() * 0.4F);
+    }
+    /** tooltip 内容行上限：超出聚合为"还有 N 种"，防 36 格全异类撑爆悬浮框 */
+    private static final int TOOLTIP_MAX_LINES = 8;
+
+    // ---------- tooltip：内容物聚合（max 需求：仿 tacz 弹药盒显示内容；我们是混合容器，扩展为按物品聚合的文本行） ----------
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> components, TooltipFlag flag) {
+        CompoundTag tag = stack.getTag();
+        if (tag == null || !tag.contains("BlockEntityTag", Tag.TAG_COMPOUND)) {
+            return; // 空箱：不追加任何行
+        }
+        ListTag items = tag.getCompound("BlockEntityTag").getList("Items", Tag.TAG_COMPOUND);
+        if (items.isEmpty()) {
+            return;
+        }
+        // 按 item 注册名聚合数量（LinkedHashMap 保序，显示稳定不闪烁）
+        Map<ResourceLocation, Integer> counts = new LinkedHashMap<>();
+        Map<ResourceLocation, Component> names = new HashMap<>();
+        for (int i = 0; i < items.size(); i++) {
+            ItemStack s = ItemStack.of(items.getCompound(i));
+            if (s.isEmpty()) {
+                continue;
+            }
+            ResourceLocation id = ForgeRegistries.ITEMS.getKey(s.getItem());
+            counts.merge(id, s.getCount(), Integer::sum);
+            names.putIfAbsent(id, s.getHoverName());
+        }
+        int shown = 0;
+        for (Map.Entry<ResourceLocation, Integer> e : counts.entrySet()) {
+            if (shown++ >= TOOLTIP_MAX_LINES) {
+                components.add(Component.translatable("tooltip.sustainedfire.ammo_crate.more", counts.size() - TOOLTIP_MAX_LINES).withStyle(ChatFormatting.GRAY));
+                return;
+            }
+            components.add(Component.literal("  ").append(names.get(e.getKey())).append(" ×" + e.getValue()).withStyle(ChatFormatting.GRAY));
+        }
     }
 }

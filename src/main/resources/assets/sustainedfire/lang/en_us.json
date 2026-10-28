@@ -11,5 +11,6 @@
   "enchantment.sustainedfire.progressive_trigger.desc": "Fire rate ramps up while firing continuously: +15% RPM per level after 3 seconds of sustained fire.",
   "block.sustainedfire.ammo_crate": "Ammo Crate",
   "container.sustainedfire.ammo_crate": "Ammo Crate",
-  "itemGroup.sustainedfire": "Sustained Fire"
+  "itemGroup.sustainedfire": "Sustained Fire",
+  "tooltip.sustainedfire.ammo_crate.more": "... and %s more types"
 }

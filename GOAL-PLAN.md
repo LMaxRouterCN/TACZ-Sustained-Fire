@@ -146,3 +146,4 @@ mixin注入点均为最小拦截，不复制TACZ代码。
   （生存/爆炸/活塞掉带内容物品，创造破坏镜像原版潜影盒不掉）。
 - 残余：手动枪机四枪（kar98/m870/m1014/spas12）的 lua hasAmmoToConsume 换弹中断仍为背包口径（belt 场景边缘）；
   物品模型双态 json 待 max 的 Blockbench 资产确认键名。
+- 2026-10-28（M7a）：max 验收 M6 通过。①弹药箱 27→36 格（BE 常量/Menu 几何/Screen 186 高连锁，旧 NBT 顺序读兼容不丢）。②tooltip 内容物聚合（灰字 名称 ×N，上限 8 行+more 键；tacz 为单类型图形组件，混合容器无对应物，max 拍板文本方案，效果可迭代）。③GUI 贴图拉伸根因=默认 blit 按 256×256 算 UV，非方形贴图被比例采样，改显式 (176,186) 重载修复。④黄线框定案方案 A：手持枪时高亮供弹半径内弹药箱轮廓（RenderLevelStageEvent 渲染层，待实现）。⑤上轮构建失败根因=tooltip import 清单漏 java.util.List（签名类型），已修。
