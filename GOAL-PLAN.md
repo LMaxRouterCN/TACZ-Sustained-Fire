@@ -156,7 +156,8 @@ mixin注入点均为最小拦截，不复制TACZ代码。
 ## 十一、M10 SB联动调查留档（2026-10-28 调查闭环，max指示挂起）
 
 ### 状态
-挂起。2026-10-29 max 指示："精妙联动先放一边，修现在这玩意"（具体修什么 max 尚未说明，未猜）。调查已全部闭环，随时可复工。
+已完成（2026-10-29 白天复工落地，执行记录见十三节；本节保留为调查期留档）。
+复工后需求两度精化（max 拍板，以十三节为准）：升级=独立供电源，与 expandContainerItems 闸零关系，buildSources 展开循环一行不动；覆盖范围追加 Curios 饰品槽。
 
 ### 需求（max 已拍板）
 做一个精妙背包（SB）升级插件物品：背包装入此升级后，枪械从背包取弹药（装备栏背包作为弹药源）。
@@ -221,3 +222,56 @@ Forge 47.4.10 字节码实证：ItemStackHandler.insertItem **首步调用 isIte
 - 游戏内验证：三开关行为 + 附魔数值改动生效性 + 背包内弹药箱供弹实测性能
 - M10 复工时看十一节；盔甲/副手槽扫描范围在那拍板
 - 版本号 0.1.0 未动，是否随里程碑升级待拍板
+## 十三、M10 复工落地：SB 供弹升级（2026-10-29，执行晚于 M11）
+
+节号说明：M11 是 max 睡前授权的夜间自主任务，先占了十二节；M10 复工在其后，编号按执行顺序顺延为十三。
+
+### 状态
+完成。commit a034fff（17 文件 +400/-62），sustainedfire-0.1.0.jar（91.3KB）已部署测试实例。待 max 游戏内验证（清单见下）。
+
+### 复工拍板链（三连纠偏，最终定稿）
+1. 「门票=免检通行证不是隔离墙」→ 作废
+2. 升级=独立供电源，与通用展开零关系（buildSources 展开循环一行不动，通用展开不认识 SB）→ 定稿
+3. 覆盖范围追加 Curios 饰品槽 → 定稿
+中间表述（"SB 永不走通用展开"等）全部作废，以本节为准。
+
+### 架构（compat/sb 四类，类加载全条件化）
+- SbCompat 门面：零 SB/Curios import，四入口（init / isPresent / collectAmmoSources / addCreativeItems），通用代码只许 import 它
+- SbCompatImpl：全部 SB 引用集中；DeferredRegister 注册 ammo_feed_upgrade；collectCandidateStacks 扫主36+盔甲+副手，curios 守卫后追加饰品槽
+- CuriosBackpackCollector：仅 curios import；CuriosApi.getCuriosInventory → getEquippedCurios() 全槽合并视图（不按 back 点名，datapack 自定义槽位天然覆盖）
+- AmmoFeedUpgradeItem：Everlasting 范本（静态 TYPE + 自冲突限1 + 空壳 Wrapper + 匿名 IUpgradeCountLimitConfig 双方法返1——Everlasting 挂 SB 自家 Config，外部 mod 不能引用）；有意偏离范本：canBeDisabled=true + hideSettingsTab=false（升级开关 UI 在设置页，藏了就没地方关）
+
+### API 实证（javap 字节码）
+- UpgradeType 无全局注册表，identity=物品类静态 TYPE 字段；NBT 重载后 UpgradeHandler.initializeWrappers 对每个 IUpgradeItem 调 getType() 重建 wrapper——外部 mod 自建 TYPE 跨存档/跨会话不丢
+- 门票=getTypeWrappers(TYPE) 非空：initializeTypeWrappers 只收 enabled wrapper（字节码 isEnabled 过滤实证），非空即装了且启用；走 UpgradeHandler 缓存，首查后零 NBT 反序列化
+- 视图=getInventoryForInputOutput()：Inception 嵌套子背包免费展开；玩家配 filter 升级后提取可能受过滤（默认全通过，待实测）
+- UpgradeConflictDefinition 是 record：(Predicate<Item>, int, Component[, Component])——谓词入参 Item 非 ItemStack（编译错误实证）
+
+### 三链路接线（与 InInventoryCrateHandler 同构，谓词复用 containsAmmoForGun）
+- buildSources 末尾追加 SB 源（消耗侧，现有 @Redirect 自动覆盖）
+- hasAmmoInCrates OR 循环（预检侧）
+- countAmmoInCrates + 循环（HUD 计数侧）
+
+### 踩坑留档
+- javac 中文诊断=GBK 字节流，按 UTF-8 读是乱码、中文 grep 空跑（两轮白排障）；修法 GetEncoding(936) 或 ASCII 模式 \.java:\d+（长期记忆 045）
+- 实例 mods 目录 jar 带中文前缀（「前置库  curios-...jar」双空格），按英文名硬拼路径必 NoSuchFile（长期记忆 044）
+- Add-Content 遇原文件无行尾换行会把新值粘进上一行（gradle.properties 的 sc_version 被污染，已修复；今后追加前先补换行）
+- gradle 版本串中 + 号=动态版本符号，curios jar 复制进 libs 时重命名（curios-forge-1.20.1-5.14.1.jar）
+
+### 已知边界
+- 双计：expandContainerItems 闸与升级同开且该背包在主 36 格时 HUD 计数双计一次（默认闸关碰不到，max 已知悉）
+- SB 缺席零类加载（门面 ModList 守卫）；curios 缺席饰品槽分支跳过；非 SB 背包的其他 Curios 容器物品不参与供弹
+
+### 验证清单（待 max 游戏内；验证前把 taczaddon 的 jar 改名隔离，验完恢复）
+1. 装升级的背包在主 36 格：射击扣背包弹
+2. 背包 GUI 升级设置页开关：关闭后断供
+3. 预检：只有背包有弹时能开火
+4. HUD 计数含背包弹
+5. Curios 背槽背包同上
+6. 同背包装第二个升级被拒（冲突提示）
+7. 无升级的背包不供弹（闸关时）
+
+### 遗留
+- 占位贴图（System.Drawing 画的弹链三子弹 16x16）待正式美术
+- 测试期无配方（创造/指令获取，发布前定）
+- HARDCODE-AUDIT.md：5ece19e（M11 夜）入库，a034fff 提交时已不在工作目录（git add -A 固化删除；本会话命令史无删除操作、记忆库无挪动记录，待 max 拍板）；恢复命令 git checkout 5ece19e -- HARDCODE-AUDIT.md

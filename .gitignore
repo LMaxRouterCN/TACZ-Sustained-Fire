@@ -31,3 +31,4 @@ build-err.log
 # agent 构建日志（不入库）
 build_out.log
 build_err.log
+build_log.txt
