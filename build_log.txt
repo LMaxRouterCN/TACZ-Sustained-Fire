@@ -1,0 +1,62 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.8/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+MixinGradle did not locate the diffplug APT plugin, skipping eclipse task configuration
+Java: 17.0.12, JVM: 17.0.12+7-LTS (Azul Systems, Inc.), Arch: amd64
+
+> Task :downloadMcpConfig
+> Task :extractSrg UP-TO-DATE
+> Task :createMcpToSrg UP-TO-DATE
+
+> Task :compileJava
+注: SpongePowered MIXIN Annotation Processor Version=0.8.5 (MixinGradle Version=0.7.38)
+注: Supported obfuscation types: ObfuscationServiceMCP supports [notch] ObfuscationServiceFG3 supports [searge]
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing searge composite mappings to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-mappings.tsrg
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing refmap to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-refmap.json
+注: Writing searge composite mappings to D:\Documents\mcmod\TACZ-Sustained-Fire\build\tmp\compileJava\compileJava-mappings.tsrg
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\client\AmmoCrateItemProperties.java:28: 警告: [removal] ResourceLocation 中的 ResourceLocation(String,String) 已过时, 且标记为待删除
+                new ResourceLocation(SustainedFire.MODID, "open"),
+                ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\client\gui\AmmoCrateScreen.java:18: 警告: [removal] ResourceLocation 中的 ResourceLocation(String,String) 已过时, 且标记为待删除
+            new ResourceLocation(SustainedFire.MODID, "textures/gui/ammo_crate.png");
+            ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\SustainedFire.java:31: 警告: [removal] FMLJavaModLoadingContext 中的 get() 已过时, 且标记为待删除
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+                                                   ^
+D:\Documents\mcmod\TACZ-Sustained-Fire\src\main\java\com\lmaxroutercn\sustainedfire\SustainedFire.java:49: 警告: [removal] ModLoadingContext 中的 get() 已过时, 且标记为待删除
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SustainedFireConfig.SPEC);
+                         ^
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+4 个警告
+
+> Task :addMixinsToJar
+> Task :processResources
+> Task :classes
+> Task :jar
+> Task :configureReobfTaskForReobfJar
+> Task :reobfJar
+> Task :configureReobfTaskForReobfJarJar
+> Task :addMixinsToJarJar
+> Task :jarJar SKIPPED
+> Task :reobfJarJar SKIPPED
+> Task :assemble
+> Task :compileTestJava NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :check UP-TO-DATE
+> Task :build
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.8/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 19s
+11 actionable tasks: 9 executed, 2 up-to-date

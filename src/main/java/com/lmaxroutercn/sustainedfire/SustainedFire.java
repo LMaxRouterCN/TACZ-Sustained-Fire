@@ -1,6 +1,7 @@
 package com.lmaxroutercn.sustainedfire;
 
 import com.lmaxroutercn.sustainedfire.ammo.FireSessionTracker;
+import com.lmaxroutercn.sustainedfire.compat.sb.SbCompat;
 import com.lmaxroutercn.sustainedfire.config.SustainedFireConfig;
 import com.lmaxroutercn.sustainedfire.registry.ModBlockEntities;
 import com.lmaxroutercn.sustainedfire.registry.ModBlocks;
@@ -40,6 +41,9 @@ public class SustainedFire {
 
         // 创造模式标签页（附魔书一览 + 弹药箱）
         ModCreativeTabs.TABS.register(modBus);
+
+        // [M10] SB 联动：SB 在场才注册供弹升级物品（门面内部 ModList 守卫，缺席时 compat 零类加载）
+        SbCompat.init(modBus);
 
         // 通用配置：弹药箱背包可用性 / 查找半径
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SustainedFireConfig.SPEC);

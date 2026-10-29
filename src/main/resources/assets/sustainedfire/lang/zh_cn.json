@@ -12,5 +12,8 @@
   "block.sustainedfire.ammo_crate": "弹药箱",
   "container.sustainedfire.ammo_crate": "弹药箱",
   "itemGroup.sustainedfire": "持续火力",
-  "tooltip.sustainedfire.ammo_crate.more": "……还有 %s 种"
+  "tooltip.sustainedfire.ammo_crate.more": "……还有 %s 种",
+  "item.sustainedfire.ammo_feed_upgrade": "供弹升级",
+  "tooltip.sustainedfire.ammo_feed_upgrade.desc": "装入背包后，枪械直接从背包内容物中取用弹药（可在背包 GUI 的升级设置中开关）。",
+  "message.sustainedfire.ammo_feed_upgrade.conflict": "同一个背包只能安装一个供弹升级。"
 }

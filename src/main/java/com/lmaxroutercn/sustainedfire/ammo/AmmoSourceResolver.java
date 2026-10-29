@@ -1,5 +1,6 @@
 package com.lmaxroutercn.sustainedfire.ammo;
 
+import com.lmaxroutercn.sustainedfire.compat.sb.SbCompat;
 import com.lmaxroutercn.sustainedfire.config.SustainedFireConfig;
 import com.lmaxroutercn.sustainedfire.item.AmmoCrateBlockItem;
 import com.tacz.guns.api.item.IAmmo;
@@ -27,6 +28,8 @@ import java.util.List;
  *      仅计数 1 的箱子参与（多叠物品的 NBT 写回无法定位唯一目标）。
  *      扫描范围：主背包 36 格 + 快捷栏（inv.items 全覆盖）；盔甲/副手槽刻意排除，扩展留 M10 复工拍板。
  *   4. 周围放置弹药箱（AABB 现查，开盖才供弹，半径来自 config）
+ *   5. SB 供弹升级背包 —— 装有启用「供弹升级」的精妙背包（主 36 格+副手+盔甲+Curios 饰品槽），
+ *      与源 2 的 expandContainerItems 闸完全正交：升级是背包自身属性而非通用容器展开（max 2026-10-29 拍板）
  *
  * 查询侧（hasAmmoInCrates / countAmmoInCrates）与消耗侧同步覆盖 3+4 两源：
  * 缺任何一侧即复现"消耗能扣弹而预检说没弹，枪不开火"的预检坑。
@@ -38,8 +41,8 @@ import java.util.List;
  * 1.20.1 Forge 的 getCapability 返回 LazyOptional（1.21 才改为 Optional），
  * 因此本类对外暴露 LazyOptional，与被替换调用点的类型完全一致。
  *
- * 已知限制（M10 处理）：Curios 背槽佩戴的容器不在 vanilla ITEM_HANDLER 内；
- * 嵌套容器只展开一层，不递归。
+ * 已知限制：通用容器展开仅一层不递归；Curios 饰品槽仅 SB 背包经供弹升级覆盖（M10 落地），
+ * 其余 Curios 容器物品不参与供弹。
  */
 public final class AmmoSourceResolver {
     private AmmoSourceResolver() {}
@@ -80,6 +83,9 @@ public final class AmmoSourceResolver {
         sources.addAll(collectInventoryCrates(shooter));
         // 周围放置弹药箱：查找半径 config 可调（默认 4.0，范围 1.0-64.0）
         sources.addAll(AmmoSourceRegistry.getNearbyAmmoBoxes(shooter, SustainedFireConfig.doubleOr(SustainedFireConfig.AMMO_CRATE_RADIUS)));
+        // [M10] SB 供弹升级背包：装了启用升级的 SB 背包作为独立弹药源（SbCompat 门面，SB 缺席时空列表）
+        // 边界：expandContainerItems 闸与升级同开且该背包在主 36 格时会双计一次（默认闸关碰不到，max 已知悉）
+        sources.addAll(SbCompat.collectAmmoSources(shooter));
         return sources;
     }
 
@@ -209,6 +215,12 @@ public final class AmmoSourceResolver {
                 return true;
             }
         }
+        // [M10] SB 供弹升级背包：查询侧同步接入（与消耗侧同源，防「能扣弹却不开火」的预检坑）
+        for (IItemHandler backpack : SbCompat.collectAmmoSources(shooter)) {
+            if (AmmoSourceRegistry.containsAmmoForGun(backpack, gun)) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -225,6 +237,10 @@ public final class AmmoSourceResolver {
         }
         for (IItemHandler box : AmmoSourceRegistry.getNearbyAmmoBoxes(shooter, SustainedFireConfig.doubleOr(SustainedFireConfig.AMMO_CRATE_RADIUS))) {
             count += countAmmoForGun(box, gun);
+        }
+        // [M10] SB 供弹升级背包：HUD 计数同步接入（枚数口径与弹药箱侧一致）
+        for (IItemHandler backpack : SbCompat.collectAmmoSources(shooter)) {
+            count += countAmmoForGun(backpack, gun);
         }
         return count;
     }

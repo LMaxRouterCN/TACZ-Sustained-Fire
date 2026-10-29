@@ -75,6 +75,7 @@ dependencies {
     implementation fg.deobf("blank:tacz:${tacz_version}")
     implementation fg.deobf("blank:sophisticatedbackpacks:${sb_version}")
     implementation fg.deobf("blank:sophisticatedcore:${sc_version}")
+    implementation fg.deobf("blank:curios-forge:${curios_version}")
 
     // Mixin 注解处理器：编译期生成 refmap（生产环境 mixin 目标重映射）
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'

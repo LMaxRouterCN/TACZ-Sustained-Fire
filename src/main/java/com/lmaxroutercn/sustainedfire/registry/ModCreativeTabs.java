@@ -1,6 +1,7 @@
 package com.lmaxroutercn.sustainedfire.registry;
 
 import com.lmaxroutercn.sustainedfire.SustainedFire;
+import com.lmaxroutercn.sustainedfire.compat.sb.SbCompat;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -31,6 +32,8 @@ public final class ModCreativeTabs {
                     .displayItems((params, output) -> {
                         // 弹药箱方块（里程碑 6；GUI 与供弹在后续 step 接入）
                         output.accept(ModItems.AMMO_CRATE.get());
+                        // [M10] SB 供弹升级：SB 在场才注册（缺席时门面 no-op）
+                        SbCompat.addCreativeItems(output);
                         // 全部 5 个附魔各一本满级书
                         putMaxBook(output, ModEnchantments.COOLING_DEVICE.get());
                         putMaxBook(output, ModEnchantments.AIR_COOLING.get());

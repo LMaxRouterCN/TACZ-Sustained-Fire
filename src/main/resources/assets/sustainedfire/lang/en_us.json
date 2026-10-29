@@ -12,5 +12,8 @@
   "block.sustainedfire.ammo_crate": "Ammo Crate",
   "container.sustainedfire.ammo_crate": "Ammo Crate",
   "itemGroup.sustainedfire": "Sustained Fire",
-  "tooltip.sustainedfire.ammo_crate.more": "... and %s more types"
+  "tooltip.sustainedfire.ammo_crate.more": "... and %s more types",
+  "item.sustainedfire.ammo_feed_upgrade": "Ammo Feed Upgrade",
+  "tooltip.sustainedfire.ammo_feed_upgrade.desc": "Guns draw ammo directly from this backpack when installed (toggle in backpack GUI).",
+  "message.sustainedfire.ammo_feed_upgrade.conflict": "Only one Ammo Feed Upgrade can be installed in the same backpack."
 }
