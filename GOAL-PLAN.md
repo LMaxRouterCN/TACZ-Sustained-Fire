@@ -449,3 +449,5 @@ loot 定谳（同轮）：minecraft:contents 非 1.20.1 函数 id——vanilla s
 - 根因：SB/SC 生态升级描述由 item.<id>.tooltip 键驱动（SB 自家 88 键实证；SC UpgradeItemBase 类含 ".tooltip" 常量），第三方升级缺键裸奔
 - 修复：lang zh/en 键改名（.desc 改 item.*.tooltip，文本不变）；删 appendHoverText 覆写（对齐 SB 自家升级无覆写行为）；删 M10 遗留 canAddUpgradeTo 诊断覆写与 5 孤儿 import
 - 物品层 super 链排除（UpgradeItemBase / ItemBase javap 均无 appendHoverText）
+
+- [贴图 2026-10-31] ammo_feed_upgrade 正式材质（32x32）替换占位，模型不变

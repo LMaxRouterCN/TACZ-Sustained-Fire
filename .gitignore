@@ -32,3 +32,4 @@ build-err.log
 build_out.log
 build_err.log
 build_log.txt
+build*.log
