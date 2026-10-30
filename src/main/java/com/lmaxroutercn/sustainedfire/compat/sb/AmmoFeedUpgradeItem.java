@@ -1,13 +1,8 @@
 package com.lmaxroutercn.sustainedfire.compat.sb;
 
-import com.lmaxroutercn.sustainedfire.SustainedFire;
-import net.minecraft.ChatFormatting;
-import net.p3pp3rf1y.sophisticatedcore.common.gui.UpgradeSlotChangeResult;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
 import net.p3pp3rf1y.sophisticatedcore.api.IStorageWrapper;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.IUpgradeCountLimitConfig;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.IUpgradeItem;
@@ -75,35 +70,10 @@ public class AmmoFeedUpgradeItem extends UpgradeItemBase<AmmoFeedUpgradeItem.Wra
         return UPGRADE_CONFLICT_DEFINITIONS;
     }
 
-    /**
-     * [临时诊断] M10 验证 bug 排查：mayPlace 到 canAddUpgradeTo 链路打点。
-     * 打印调用侧/type上限/组上限/背包内同类计数/结果与错误消息——根因确认后整段移除。
-     */
-    @Override
-    public UpgradeSlotChangeResult canAddUpgradeTo(IStorageWrapper storageWrapper, ItemStack stack, boolean firstLevelStorage, boolean isClientSide) {
-        int sameCount = 0;
-        for (int i = 0; i < storageWrapper.getUpgradeHandler().getSlots(); i++) {
-            if (storageWrapper.getUpgradeHandler().getStackInSlot(i).getItem() instanceof AmmoFeedUpgradeItem) {
-                sameCount++;
-            }
-        }
-        UpgradeSlotChangeResult result = super.canAddUpgradeTo(storageWrapper, stack, firstLevelStorage, isClientSide);
-        SustainedFire.LOGGER.info("[ammo_feed诊断] side={} storageType={} typeLimit={} groupLimit={} sameCount={} ok={} msg={}",
-                isClientSide ? "CLIENT" : "SERVER",
-                storageWrapper.getStorageType(),
-                getUpgradesPerStorage(storageWrapper.getStorageType()),
-                getUpgradesInGroupPerStorage(storageWrapper.getStorageType()),
-                sameCount,
-                result.isSuccessful(),
-                result.getErrorMessage().map(c -> c.getString()).orElse("-"));
-        return result;
-    }
-    @Override
-    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
-        tooltip.add(Component.translatable("tooltip.sustainedfire.ammo_feed_upgrade.desc")
-                .withStyle(ChatFormatting.GRAY));
-    }
+    // [生态对齐 2026-10-31] 升级描述走 SB/SC 生态标准键 item.<id>.tooltip：SB 自家
+    // 88 个升级 lang 全用此模式，第三方升级缺键时 tooltip 渲染原始键行（本次 bug）。
+    // 不覆写 appendHoverText——SB 自家升级物品均无此覆写（EverlastingUpgradeItem
+    // javap 实证），物品栏 hover 无描述行=生态原生行为，描述由 GUI 侧生态键提供。
 
     /**
      * 空壳 wrapper：本升级无行为逻辑（供弹判定在 AmmoSourceResolver 侧），

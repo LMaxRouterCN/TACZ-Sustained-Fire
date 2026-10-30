@@ -442,3 +442,10 @@ loot 定谳（同轮）：minecraft:contents 非 1.20.1 函数 id——vanilla s
 - 验收：①射空无假开枪+HUD 归零 ②升级关→关包直射不射 ③升级开→直射正常 ④切枪/按E免开SB包 ⑤嵌套子背包 HUD 跟随 ⑥无SB环境不崩（可选）⑦生存挖箱 tooltip+耐久条+放回完好
 - 两悬案随验结案：quoted NBT path（"sf:fill"）语法正确，启动无 parse 错；copy_nbt block_entity 源含 saveAdditional 字段（耐久条在=实证）
 - 收尾清除：SFDiag×2 插桩、diag-archive、build-m12*.log×5；2040 jar 实为同路径覆盖（扫描 TEST mods 与根 mods 仅剩当前 jar）
+
+### M13 tooltip 修复（2026-10-31）：供弹升级原始键行
+
+- 症状：tooltip 出现 item.sustainedfire.ammo_feed_upgrade.tooltip 原始键行
+- 根因：SB/SC 生态升级描述由 item.<id>.tooltip 键驱动（SB 自家 88 键实证；SC UpgradeItemBase 类含 ".tooltip" 常量），第三方升级缺键裸奔
+- 修复：lang zh/en 键改名（.desc 改 item.*.tooltip，文本不变）；删 appendHoverText 覆写（对齐 SB 自家升级无覆写行为）；删 M10 遗留 canAddUpgradeTo 诊断覆写与 5 孤儿 import
+- 物品层 super 链排除（UpgradeItemBase / ItemBase javap 均无 appendHoverText）
