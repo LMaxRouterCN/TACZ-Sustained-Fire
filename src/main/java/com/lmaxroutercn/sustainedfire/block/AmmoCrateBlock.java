@@ -6,11 +6,8 @@ import com.lmaxroutercn.sustainedfire.menu.AmmoCrateMenu;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
-import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -172,25 +169,12 @@ public class AmmoCrateBlock extends Block implements EntityBlock {
         level.playSound(null, pos, open ? SoundEvents.BARREL_OPEN : SoundEvents.BARREL_CLOSE, SoundSource.BLOCKS, 0.5F, 1.0F);
     }
 
-    // ---- 内容随物品（潜影盒语义，max 2026-10-28 拍板） ----
-    // 覆盖 loot table 路径：生存挖掘/爆炸/活塞推毁统一掉落携带 BlockEntityTag 的物品，
-    // 放置时 vanilla 按 "BlockEntityTag" 标准机制自动恢复内容。
-    // 创造破坏镜像原版潜影盒：不掉物品。本覆盖不查 loot table，故无需 loot json。
-    @Override
-    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
-        ItemStack stack = new ItemStack(this);
-        BlockEntity be = builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
-        if (be instanceof AmmoCrateBlockEntity crate) {
-            // 与 vanilla ShulkerBoxBlock.getDrops 同构：全量存档去 id 后随物品
-            CompoundTag beTag = crate.saveWithFullMetadata();
-            beTag.remove("id");
-            stack.getOrCreateTag().put("BlockEntityTag", beTag);
-            // 占用槽数缓存：耐久条与物品模型谓词的 O(1) 数据源
-            stack.getOrCreateTag().putInt(AmmoCrateBlockItem.TAG_FILL, crate.getOccupiedSlots());
-        }
-        return List.of(stack);
-    }
-    /** 创造中键取箱带内容（与 getDrops 同语义，潜影盒行为补全，关闭[中间键丢内容]残余） */
+    // ---- 内容随物品（潜影盒语义）→ 走数据包 loot 表 [M12.3，max 2026-10-30 拍板] ----
+    // 删除 getDrops 代码覆盖：生存挖掘/爆炸/活塞推毁统一走 loot_tables/blocks/ammo_crate.json
+    // （copy_nbt：Items→BlockEntityTag.Items、Fill→sf:fill；放置 vanilla 按 BlockEntityTag 自动恢复）。
+    // 表可被任意 datapack 整表 override——掉落规则从此玩家可配置，代码不再垄断。
+    // 行为差异：爆炸从[代码版必掉]变为[vanilla 概率幸存]（barrel 同款语义）。
+    /** 创造中键取箱带内容（与 loot 表同语义；中键克隆是 vanilla clone 语义不走 loot 表，保留代码实现） */
     @Override
     public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
         ItemStack stack = super.getCloneItemStack(level, pos, state);

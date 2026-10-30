@@ -4,13 +4,26 @@
     {
       "rolls": 1.0,
       "bonus_rolls": 0.0,
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" }
+      ],
       "entries": [
-        { "type": "minecraft:item", "name": "sustainedfire:ammo_crate" }
+        {
+          "type": "minecraft:item",
+          "name": "sustainedfire:ammo_crate",
+          "functions": [
+            {
+              "function": "minecraft:copy_nbt",
+              "source": "block_entity",
+              "ops": [
+                { "op": "replace", "source": "Items", "target": "BlockEntityTag.Items" },
+                { "op": "replace", "source": "Fill", "target": "\"sf:fill\"" }
+              ]
+            }
+          ]
+        }
       ]
     }
   ],
-  "functions": [
-    { "function": "minecraft:contents" },
-    { "function": "minecraft:explosion_decay" }
-  ]
+  "random_sequence": "sustainedfire:blocks/ammo_crate"
 }

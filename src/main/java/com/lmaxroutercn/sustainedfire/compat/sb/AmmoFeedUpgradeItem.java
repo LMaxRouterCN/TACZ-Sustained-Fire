@@ -1,6 +1,8 @@
 package com.lmaxroutercn.sustainedfire.compat.sb;
 
+import com.lmaxroutercn.sustainedfire.SustainedFire;
 import net.minecraft.ChatFormatting;
+import net.p3pp3rf1y.sophisticatedcore.common.gui.UpgradeSlotChangeResult;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -40,7 +42,7 @@ public class AmmoFeedUpgradeItem extends UpgradeItemBase<AmmoFeedUpgradeItem.Wra
     /** 升级类型 identity：UpgradeHandler.getTypeWrappers(TYPE) 以此检索本升级的 wrapper */
     public static final UpgradeType<Wrapper> TYPE = new UpgradeType<>(Wrapper::new);
 
-    /** 自冲突（第二个装不进来）：谓词=本类物品，countAllowed=0（Everlasting 字节码同款） */
+    /** 自冲突（第二个装不进来）：谓词=本类物品，countAllowed=0（Inception 的 add.inception_exists 字节码同款；Everlasting 实无静态冲突定义，唯一性走 SB Config——2026-10-29 实证修正） */
     public static final List<IUpgradeItem.UpgradeConflictDefinition> UPGRADE_CONFLICT_DEFINITIONS = List.of(
             new IUpgradeItem.UpgradeConflictDefinition(
                     item -> item instanceof AmmoFeedUpgradeItem, // 谓词入参是 Item（Predicate<Item>，javac 报错实证；Everlasting 同款）
@@ -73,6 +75,29 @@ public class AmmoFeedUpgradeItem extends UpgradeItemBase<AmmoFeedUpgradeItem.Wra
         return UPGRADE_CONFLICT_DEFINITIONS;
     }
 
+    /**
+     * [临时诊断] M10 验证 bug 排查：mayPlace 到 canAddUpgradeTo 链路打点。
+     * 打印调用侧/type上限/组上限/背包内同类计数/结果与错误消息——根因确认后整段移除。
+     */
+    @Override
+    public UpgradeSlotChangeResult canAddUpgradeTo(IStorageWrapper storageWrapper, ItemStack stack, boolean firstLevelStorage, boolean isClientSide) {
+        int sameCount = 0;
+        for (int i = 0; i < storageWrapper.getUpgradeHandler().getSlots(); i++) {
+            if (storageWrapper.getUpgradeHandler().getStackInSlot(i).getItem() instanceof AmmoFeedUpgradeItem) {
+                sameCount++;
+            }
+        }
+        UpgradeSlotChangeResult result = super.canAddUpgradeTo(storageWrapper, stack, firstLevelStorage, isClientSide);
+        SustainedFire.LOGGER.info("[ammo_feed诊断] side={} storageType={} typeLimit={} groupLimit={} sameCount={} ok={} msg={}",
+                isClientSide ? "CLIENT" : "SERVER",
+                storageWrapper.getStorageType(),
+                getUpgradesPerStorage(storageWrapper.getStorageType()),
+                getUpgradesInGroupPerStorage(storageWrapper.getStorageType()),
+                sameCount,
+                result.isSuccessful(),
+                result.getErrorMessage().map(c -> c.getString()).orElse("-"));
+        return result;
+    }
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);

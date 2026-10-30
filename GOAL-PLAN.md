@@ -275,3 +275,170 @@ Forge 47.4.10 字节码实证：ItemStackHandler.insertItem **首步调用 isIte
 - 占位贴图（System.Drawing 画的弹链三子弹 16x16）待正式美术
 - 测试期无配方（创造/指令获取，发布前定）
 - HARDCODE-AUDIT.md：5ece19e（M11 夜）入库，a034fff 提交时已不在工作目录（git add -A 固化删除；本会话命令史无删除操作、记忆库无挪动记录，待 max 拍板）；恢复命令 git checkout 5ece19e -- HARDCODE-AUDIT.md
+
+## 十四、M10 bug「升级装不进去」调查状态（2026-10-29 深夜，diag3 已部署待 max 测试）
+
+### 静态结论
+四步准入链（mayPlace→isItemValid→canAddUpgradeTo 四步检查→doClick 放置）已字节码级全部钉死：空背包首插纸面全过（typeLimit=1 计数门 0≥1 不成立；自冲突 countAllowed=0 语义=首件必过，SB 原厂 Inception 同款实证；checkThis 空背包零迭代；组上限被 UpgradeGroup.NONE solo 短路全旁路）。红字链实证：canAdd 失败红字必现（updateSlotChangeError 无条件渲染）；isItemValid 失败静默无红字。剩余真相只在运行时。
+
+### diag3 测试操作（max 回场执行，约 2 分钟）
+1. 启动 TEST 1.20.1-Forge_47.4.10 实例。taczaddon 无需隔离（本 bug 与其无关）。〔2026-10-29 夜核实：mods 目录当前已无 taczaddon jar，七项清单测试亦无需隔离操作；该 jar 去向无本方操作记录，max 知悉即可〕
+2. 创造模式拿 sustainedfire:ammo_feed_upgrade 一个 + SB 背包一个，背包放主物品栏。
+3. 打开背包 GUI，手持升级拖到升级槽区，点一下（观察红字有无）。
+4. 关游戏，日志 E:\MC\.minecraft\versions\TEST 1.20.1-Forge_47.4.10\logs\latest.log 搜「sf诊断」/「ammo_feed诊断」发给模型。
+
+### 判读表
+- clicked 无 → 点击被屏幕层/其他 mod 吞，菜单层未收到
+- mayPlace 入口无 → 点的不是升级槽
+- mayPlace 入口 itemClass 非 AmmoFeedUpgradeItem → 物品身份/注册问题
+- slotCurrent 空槽 + mayPlace 出口 false + 无 canAdd 日志 → isItemValid 运行时拒（近不可能）
+- slotCurrent 占用 + mayPlace 出口 false + 无 canAdd 日志 → canSwapUpgradeFor 被拒
+- canAdd ok=false msg=... → 根因直出
+- 全 true 仍不放置 → doClick 放置层
+
+### 待 max 拍板（材料已齐）
+- loot json 死活：AmmoCrateBlock.getDrops 全覆写不查 loot table（源码注释自证），data/sustainedfire/loot_tables/blocks/ammo_crate.json 为死文件。行为差异备忘：手写版爆炸/活塞推毁掉落内容 100% 保留（json 的 explosion_decay 函数从未生效过），拍板删/留时参考。
+- HARDCODE-AUDIT.md 恢复：git checkout 5ece19e -- HARDCODE-AUDIT.md（a034fff 提交时被 git add -A 固化删除，本会话无删除操作记录，疑案待查）
+- 正式贴图（7 张 png 占位：block 4+inner+gui+item feed）、版本号、发布前配方
+
+### 诊断改动（未 commit，根因确认后整体移除）
+AmmoFeedUpgradeItem.canAddUpgradeTo 打点 / 2 个 SFDiag mixin（clicked+mayPlace 带 slotCurrent）/ sustainedfire.mixins.json 两行 / diag-archive/（diag1、diag2 备份）
+
+### 十四节续：根因与修复（2026-10-29 深夜）
+根因（字节码级钉死）：SB 给每个背包的 UpgradeHandler 套了匿名内部类覆写 isItemValid，语义四关：super 检查（instanceof IUpgradeItem）→ 空手 → 命名空间 sophisticatedbackpacks 免检 → 其余必须在物品标签 sophisticatedbackpacks:backpack_upgrade 内。我们的升级第四关失败 → mayPlace 在 isItemValid 后提前 return false → canAddUpgradeTo 零调用、红字链 updateSlotChangeError 不可达 = 静默拒绝。与 diag3 日志完全闭合（mayPlace 683 全 false / clicked 414 / canAdd 0 / 槽全空 / 无红字）。SB 原厂升级走命名空间免检通道故从未踩此坑。
+修复：新增 src/main/resources/data/sophisticatedbackpacks/tags/items/backpack_upgrade.json（replace:false，values 含 sustainedfire:ammo_feed_upgrade）——SB 官方第三方扩展点，纯数据文件零代码。标签路径双验证：SB jar 数据文件 + ModItems.BACKPACK_UPGRADE_TAG 字节码。
+状态：标签路径已修正为 upgrade.json 并重新部署，待 max 重启游戏复测。下一动作：max 复测拖入升级，成功判据=日志出现 ammo_feed诊断 canAdd 行（预期 ok=true）+ mayPlace result=true，随后跑七项清单，清诊断代码出正式版。
+### 十四节三续：标签路径修正（2026-10-30 凌晨）
+第一版修复失败根因：tag 文件名错。ModItems.<clinit> 字节码 bc195-217 实锤：new ResourceLocation("sophisticatedbackpacks", "upgrade") -> TagKey.create(Registries.ITEM, ...) -> BACKPACK_UPGRADE_TAG。tag id = sophisticatedbackpacks:upgrade，非字段名暗示的 backpack_upgrade（该字面量属 BACKPACK_UPGRADE_RECIPE_SERIALIZER，配方序列化器）。正确文件：data/sophisticatedbackpacks/tags/items/upgrade.json。SB jar 自身不带任何自家命名空间 tags/items 条目（原厂升级走命名空间免检通道），该标签默认空、纯第三方扩展点。教训（长期记忆 048 已改写）：ResourceLocation/TagKey 的真实 id 必须读构造点 ldc 字面量，禁止从字段名推导。
+## M12：SB 供弹客户端同步（2026-10-30）
+
+### 症状（max 实测三连）
+1. 背包有弹+升级开：射空后点左键仍有开枪动作但无子弹，HUD 弹药数不变
+2. SB GUI 内关升级：同样假象（客户端仍认为有弹）
+3. SB GUI 内开升级：枪械 GUI 显示 0 弹不射（客户端认为升级关）
+共同点：切枪/按 E 不恢复，必须打开 SB 背包 GUI 才恢复。
+
+### 根因
+SB 背包内容不在 ItemStack NBT（服务端真身在世界 SavedData，客户端镜像
+BackpackStorage.clientStorageCopy 仅 GUI 打开时经 Request→BackpackContentsMessage 刷新）。
+GUI 关闭后镜像死水；wrapper 的 handler 缓存（构造时反序列化快照）随之陈旧；
+TACZ HUD 回写链（M6/031）把旧计数写进枪 NBT 成为开火闸门 → 假阳性/假阴性。
+"按 E 不恢复"是铁证：InventoryMenu 每 tick broadcastChanges 推不动（服务端 NBT 没变）。
+
+### 修复架构（标记→推送→落地→消费）
+- 服务端标记：4 个 mixin 漏斗（BackpackWrapper.mark×2 / SC InventoryHandler.
+  onContentsChanged[射击消耗主漏斗，extractItemInternal 直调] / SC UpgradeHandler.
+  onContentsChanged / UpgradeToggleMessage toggle lambda[setEnabled 不走 mark 链，
+  唯一捕获]）→ SbAmmoSyncManager.markDirty(uuid)，幂等入集
+- 推送：ServerTickEvent END 冲洗，节流 sb_sync.intervalTicks（默认 1）；
+  dirty ∩ 携带者"带供弹升级的背包树"（含嵌套）→ SBPPacketHandler.sendToClient
+  (BackpackContentsMessage(uuid, contents.copy()))——复用 SB 已注册包，客户端落地零新代码
+- 客户端落地：SB 自家 handler merge 进镜像 → BackpackStorageMixin 钩
+  setBackpackContents HEAD → uuid 入 NEEDS_REFRESH
+- 客户端消费：collectAmmoSources 读弹药前 refreshStaleTree——root 树内任一 uuid
+  待刷新 → root.onContentsNbtUpdated()（SB 自家完整失效原语）→ 懒重建从新镜像反序列化
+
+### 关键设计决策
+- 树级消费（非 root uuid 级）：嵌套子背包 B 变更推 B 的包，但 B 旧快照缓存在 A 的
+  handler 里——必须整树重建（root 重建级联子 wrapper 新建）
+- 线程守卫对称（单人双端同 JVM 共享静态字段）：markDirty 仅 server / 
+  onClientStorageSet 仅 client / refreshStaleTree 仅 client（server 误消费会清掉
+  客户端待刷标记——真 bug，已防）
+- 发送前 contents.copy() 深拷：网络序列化可能延迟到 Netty 线程，SavedData 活引用
+  有并发修改风险（SB 自己发浅拷壳，我们稳一档）
+- mixin.sb 子包 + SfMixinPlugin（IMixinConfigPlugin）按 SB 在场 gating：
+  SB/SC 缺席时整组不应用（钩子引用 SB 类，缺席即 NoClassDefFoundError）
+- 懒消费白送：GUI 开着无人读弹药 → NEEDS_REFRESH 挂起到关 GUI 后首读，
+  mid-GUI 重建风险自动归零
+
+### 文件清单
+新增：compat/sb/SbAmmoSyncManager.java（核心）、mixin/sb/ 五件
+（BackpackWrapperMixin / StorageInventoryHandlerMixin / StorageUpgradeHandlerMixin /
+UpgradeToggleMessageMixin / BackpackStorageMixin[client 段]）、mixin/SfMixinPlugin.java
+修改：mixins.json（plugin 字段 + 6 条目）、SustainedFireConfig.java（sb_sync 组两条）、
+SbCompatImpl.java（init 挂 tick + collectAmmoSources 消费点 + collectCandidateStacks 包级化）
+
+### 已知限制（接受，自愈路径：开一次 SB GUI）
+- BE 态背包变更后 100 tick 内被捡回、或离线携带期间变更 → 携带者镜像漏一次推送
+- NEEDS_REFRESH 上界 128 暴力全清（极端时多刷几个 wrapper，幂等无害）
+
+### 性能账
+空闲 tick：一次 isEmpty 判断（≈零）。射击 tick：每背包一次全量 NBT 拷+序列化
+（108 槽 ≈1-3KB，0.1-0.3ms）+ 玩家树扫描。全自动泼射 20 包/s/人 ≈40-60KB/s 峰值
+（调 intervalTicks 可压）。幻影窗口 ≤1 tick + HUD 50ms 缓存 = 原版背包直读枪固有节奏。
+
+### 测试清单（部署后）
+1. 射空复测：SB 背包装弹+升级，射空 → 点左键不再有假开枪，HUD 归零
+2. 关升级：SB GUI 关掉供弹升级 → 关 GUI 直接开枪：不射（假阳性消失）
+3. 开升级：SB GUI 打开供弹升级 → 关 GUI 直接开枪：正常射（假阴性消失）
+4. 切枪/按 E 不需要开 SB 背包
+5. 嵌套：Inception 子背包放弹，磁铁/射击后 HUD 跟随
+6. SB 缺席环境（可选）：无 SB 实例启动不崩（mixin gating 验证）
+
+### M12 已知限制补充（2026-10-30 构建前验证轮）
+- 磁铁升级在 SB GUI 开着时吸弹：推包 → HUD 若在 GUI 下仍跑计数 → mid-GUI 重建 wrapper 缓存。
+  数据面 coherent（新旧 handler 读写同一 SavedData 活表），最坏升级 tab cosmetic 抖动，复测时盯一眼。
+- 接口验证结案：onContentsNbtUpdated() 是 SC IStorageWrapper 的 abstract 方法
+  （IBackpackWrapper 继承之），接口引用直接调用零 cast；capability attach 挂
+  BackpackWrapper 本尊（initCapabilities → BackpackItem$2 → new BackpackWrapper）。
+
+### M12 状态（2026-10-30 03:05 构建部署完成）
+- 构建：BUILD SUCCESSFUL（17s 增量，历经 3 轮——IMixinConfigPlugin 接口方法凭记忆漏写
+  getMixins / acceptTargets 各烧一轮，javap mixin-0.8.4 实证 7 方法后修复；
+  另 create 指令被 .agent_trash 旧备份拦截一轮，清后备后落盘）
+- 部署：sustainedfire-0.1.0.jar (108KB) → E:\MC\.minecraft\versions\Industrial Revolution 2040\mods\
+  （替换 10/29 旧版；构建方式=schtasks 独立会话 --no-daemon，绕开框架杀进程）
+- 运行时预检：UpgradeToggleMessage.lambda$handleMessage$1 签名与注入完全一致
+  （static void(UpgradeToggleMessage, ServerPlayer, IBackpackWrapper)）
+- 诊断 mixin（SFDiagStorage×2）确认纯 LOGGER 观察无行为修改，不阻塞任何复测环境
+  （SC 缺席时目标类不加载即惰性；复测时 SB GUI 会刷 [sf诊断-*] 日志，可忽略）
+- 当前：待人工复测六项——①射空无假开枪/HUD 归零 ②GUI 关升级→关包直射：不射
+  ③GUI 开升级→关包直射：正常射 ④切枪/按 E 无需开 SB 背包 ⑤嵌套子背包磁铁/射击 HUD 跟随
+  ⑥（可选）SB 缺席环境启动不崩
+- 复测通过后待办：清 SFDiag×2 + diag-archive/ + build-m12.log（mixins.json 同步删条目）
+  → commit M10 系 + M12 全部 → 正式版流程（待决：loot 删/留、贴图、版本号、
+  HARDCODE-AUDIT B 组拍板）
+
+## M12.1 SB gating 修复（2026-10-30 04:15，max 睡眠期间执行，未 commit）
+- 症状：M12 部署后六项复测完全没变；jar hash 一致排除旧包。
+- 根因：shouldApplyMixin 调用时机 = mixin prepare 阶段（debug.log 时间线：ModSorter 完成 03:26:44.9 -> 全部 MixinInfo 构造 + veto 03:26:47.7 -> 首个 FMLModContainer 03:26:54.4），runtime ModList 尚未构建，null/异常 -> false，SB 在场也整组 veto（sb 组 5 只零 Mixing 行）；Mixin 框架对 veto 零日志。
+- 修复：SfMixinPlugin 三层判定（FMLLoader.getLoadingModList().getModFileById 命中即终局 -> ModList.isLoaded 兜底 -> 保守 false）+ 全决策 LOGGER 'sf-mixin-plugin' + 判定缓存；旧版备份 %TEMP%\SfMixinPlugin.java.m12backup。
+- 构建：SUCCESSFUL（build-m121.log）
+- 部署：TEST mods replaced, hash ok
+- 注意：sb 组 5 只 mixin 属首次真实运行时应用（M12 期间一直被本 bug veto），若启动崩溃先看 mixin apply 报错（defaultRequire=1）。
+- max 醒后验证链：启动 TEST -> latest.log 搜 'sf-mixin-plugin'（期望 SB gating present=true）-> debug.log 确认 sb 组 5 只 Mixing 行 -> 重跑六项复测 -> 通过后清诊断件 + commit（M10+M12+M12.1 一并）。
+- 遗留：loot_tables sustainedfire:blocks/ammo_crate 解析失败（loot 待决事项）；2040 整合包 mods 的 sf jar 已被换成新版（SB 在场 + gating 已修，安全；是否换回由 max 定）。
+
+### M12 验证夜记（2026-10-30 21:22，自动执行：只读考古 + 本文档，代码零改动）
+- 考古定谳：早晨"完全没变"=原版 M12（gating veto，sb 组 5 mixin 零应用）；晚局1（18:54-58）=测试配置断裂（升级在身包 64b0c797 空仓，612 发误入世界背包 bf6dd497，GUI 同皮无法肉眼区分）。两者均不构成 M12.1 失效证据。
+- 局4（20:08-20:24）重配后 37 秒生存窗口：144 发经 SB 背包消耗（config 三闸实证 + 弹药箱 1296 未动 + 末影箱空 + sophisticatedstorage.dat 不存在，排除法钉死）→ 服务端供弹链端到端存活。终态身包 108 发 + 升级 enabled=1，已备下次复测。
+- 未决①：37 秒窗口客户端三症状肉眼观察（射击/HUD/toggle 无埋点），六项复测清单不变。
+- 未决②：SbAmmoSyncManager 线程组守卫（SidedThreadGroups 身份判断）是 M12.1 唯一未经运行时验证的部件。1.20.1 该类在 fmlcore 非 universal；若单人 Render thread 不在 CLIENT 组（主线程组不可后改，机制上存在此可能），客户端半链静默死亡 = 三症状必然保留。验证中：fmlcore 字节码 + spin 补丁 + Render thread 构造点。
+- 未决③：loot_tables/blocks/ammo_crate.json 每局解析失败，疑似非法函数 id（minecraft:contents），修复模板=vapilla shulker_box.json（容器类方块掉落保内容）。
+
+### M12.2 判决：客户端线程组守卫静默死亡（2026-10-30 21:47，B 面坐实，修复等 max 拍板）
+证据链（生产 jar 字节码，非推测）：
+1. forge-client.jar 补丁版 Main.main：Thread.currentThread().setName("Render thread")——改名不换线程，游戏全程（Minecraft 构造/run 循环/包处理/HUD/mixin）跑在 JVM 主线程上
+2. Java ThreadGroup 构造时定死无 setter；JVM 主线程生于默认 "main" 组，setName 不动组
+3. SidedThreadGroups.CLIENT 是 ThreadGroup 实例，全 classpath 无代码用它构造线程（forge-client/universal/modlauncher/bootstrap/securejar + SB/SC/SS 已扫，引用清一色 SERVER 判断；fmlloader/fmlearlydisplay 由版本 JSON 精确 classpath 复扫闭环）
+4. 官方自白：EffectiveSide.get() 对非 SidedThreadGroup 线程回退 CLIENT——回退的存在=承认 Render thread 不在 CLIENT 组
+后果：onClientStorageSet/refreshStaleTree 守卫永假 → NEEDS_REFRESH 永空 → wrapper 缓存永不失效 → 三症状结构性保留；markDirty（SERVER 组）运行时健康（补丁 MinecraftServer.spin = new Thread(SidedThreadGroups.SERVER,…) + SB 同款生产验证）。推送/落地/消耗三段全活，死的是"落地→消费"最后一跳。与局4 观测自洽（服务端 144 发消耗正常+客户端三症状必在）。37 秒口供降级为佐证。
+修复提案（未动代码）：SbAmmoSyncManager 三处守卫换 EffectiveSide.get()——markDirty 行为等价（SidedThreadGroup 构造器包私有，SERVER 组单实例，EffectiveSide.SERVER ⇔ 组==SERVER 实例）；onClientStorageSet/refreshStaleTree 复活；import 换 LogicalSide+EffectiveSide；类文档"线程守卫对称"段同步改注。
+验收路径：构建→部署 TEST→六项清单（背包 108 发+升级 enabled=1 已就位）→通过则清 SFDiag×2+diag-archive+build-m12*.log→M10/M12/M12.1/M12.2 一并 commit；不过则 [sf-sync诊断] 插桩定位残余断点。
+loot 定谳（同轮）：minecraft:contents 非 1.20.1 函数 id——vanilla shulker_box.json 里它是 set_contents 函数内 dynamic entry 的 name，本表误用作顶层函数→Unknown type 每局刷错。AmmoCrateBlock.getDrops 代码覆盖已接管全部真实掉落路径（10-28 拍板潜影盒语义），表残余害处=报错刷屏+直查空表。修法三选：删文件 / 最小 item-only（推荐）/ copy_nbt 全复刻（需先读 TAG_FILL 键名）。
+
+### M12.3 构建部署完成（2026-10-30 22:45）
+- 源码改动全落盘：BE saveAdditional +Fill（存档现算零迁移）；Block 删 getDrops +3 孤儿 import（getCloneItemStack 保留）；loot json 重写（barrel 骨架 + copy_nbt 两 op：Items→BlockEntityTag.Items、Fill→"sf:fill" quoted key）
+- 备份 %TEMP%\*.m123backup×3 + SbAmmoSyncManager.java.m122backup
+- 过程事故存档：①首轮编辑脚本 PS ParserError 零执行 ②二轮构建脚本回执"无输出"（构建/部署实际状态靠 log/jar/MD3 三件套核查兜底，本轮已按需补齐）
+- 待实测（游戏内 30 秒判）：copy_nbt 的 block_entity 序列化是否含 Fill（saveWithFullMetadata 推测）；quoted NBT path 语法（失败=挖箱掉落物无耐久条/启动 log 刷 parse 错）
+- 验收=七项：六项守卫 + 第七项生存挖箱（tooltip/耐久条/放回完好；爆炸概率幸存已知悉）
+### M12 系列收案（2026-10-30 23:24，七项生存验收全过）
+
+- M12：四级变更漏斗 mixin + BackpackStorage 客户端镜像观测点 + SfMixinPlugin SB 在场 gating
+- M12.1：plugin 判定链根因修复（mixin prepare 阶段 runtime ModList 未构建 → LoadingModList 首选 + ModList 兜底 + 保守尾，全决策落日志）
+- M12.2：SbAmmoSyncManager 守卫 EffectiveSide 化（FML early display 渲染线程组=main，旧线程组判断在客户端永假，三症状共同结构性根因）
+- M12.3：弹药箱掉落 loot 表化（copy_nbt 两 op + BE Fill 持久化 + datapack 可整表 override；爆炸语义对齐 vanilla 概率幸存）
+- 验收：①射空无假开枪+HUD 归零 ②升级关→关包直射不射 ③升级开→直射正常 ④切枪/按E免开SB包 ⑤嵌套子背包 HUD 跟随 ⑥无SB环境不崩（可选）⑦生存挖箱 tooltip+耐久条+放回完好
+- 两悬案随验结案：quoted NBT path（"sf:fill"）语法正确，启动无 parse 错；copy_nbt block_entity 源含 saveAdditional 字段（耐久条在=实证）
+- 收尾清除：SFDiag×2 插桩、diag-archive、build-m12*.log×5；2040 jar 实为同路径覆盖（扫描 TEST mods 与根 mods 仅剩当前 jar）

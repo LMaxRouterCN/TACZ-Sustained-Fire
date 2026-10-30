@@ -1,6 +1,7 @@
 {
     "required": true,
     "minVersion": "0.8",
+    "plugin": "com.lmaxroutercn.sustainedfire.mixin.SfMixinPlugin",
     "package": "com.lmaxroutercn.sustainedfire.mixin",
     "compatibilityLevel": "JAVA_17",
     "refmap": "sustainedfire.refmap.json",
@@ -8,10 +9,15 @@
         "AbstractGunItemMixin",
         "ModernKineticGunScriptAPIMixin",
         "LivingEntityShootMixin",
-        "GunDataMixin"
+        "GunDataMixin",
+        "sb.BackpackWrapperMixin",
+        "sb.StorageInventoryHandlerMixin",
+        "sb.StorageUpgradeHandlerMixin",
+        "sb.UpgradeToggleMessageMixin"
     ],
     "client": [
-        "GunHudOverlayMixin"
+        "GunHudOverlayMixin",
+        "sb.BackpackStorageMixin"
     ],
     "injectors": {
         "defaultRequire": 1

@@ -115,6 +115,10 @@ public class AmmoCrateBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.put("Items", items.serializeNBT());
+        // [M12.3 loot 数据包化，max 2026-10-30 拍板] 占用槽数持久化：loot 表 copy_nbt 的源键
+        // （Fill → 物品 sf:fill，耐久条/物品模型谓词的 O(1) 缓存）。存档时现算无运行时字段，
+        // 旧档下次保存自动带上零迁移；客户端不消费（getUpdateTag 不加），纯 loot 链数据源。
+        tag.putInt("Fill", getOccupiedSlots());
     }
 
     /** 已占用槽数：挖掘捕获时写进物品 "sf:fill"（耐久条/模型谓词 O(1) 读） */

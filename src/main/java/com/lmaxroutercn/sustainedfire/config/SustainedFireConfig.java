@@ -13,6 +13,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
  *   ammo_crate.radius            放置态弹药箱的取弹查找半径。
  *   ammo_crate.crateAmmoOnly     true = 弹药箱只允许装入 TACZ 弹药/弹药盒。统一过滤，
  *                                同时作用于放置态箱子、背包内物品态、光标交互与漏斗。
+ *   sb_sync.enabled / intervalTicks  [M12] SB 背包内容变更主动推送携带者客户端（GUI 外同步）。
  *   enchantments.*               全部附魔数值（max 拍板：附魔具体数值必须进配置）。
  *
  * 已知限制：COMMON 配置不跨端同步（客户端与服务端各读各的文件），
@@ -41,6 +42,14 @@ public final class SustainedFireConfig {
 
     /** true = 弹药箱只收 TACZ 弹药/弹药盒（统一过滤，默认 false = 通用容器） */
     public static final ForgeConfigSpec.BooleanValue AMMO_CRATE_AMMO_ONLY;
+
+    // ---- sb_sync：SB 供弹客户端同步（M12）----
+
+    /** SB 背包内容变更主动推送携带者客户端（GUI 外弹药计数/升级开关同步的总闸） */
+    public static final ForgeConfigSpec.BooleanValue SB_AMMO_SYNC;
+
+    /** 推送节流间隔（服务端 tick，1 = 每 tick 延迟最低；调大省带宽） */
+    public static final ForgeConfigSpec.IntValue SB_AMMO_SYNC_INTERVAL;
 
     // ---- enchantments：费用曲线（本模组全部附魔共享） ----
 
@@ -101,6 +110,18 @@ public final class SustainedFireConfig {
                 .comment("true = ammo crates (placed / item form / cursor / hoppers) only accept TACZ ammo and ammo boxes.",
                         "true = 弹药箱（放置态/物品态/光标交互/漏斗）只允许装入 TACZ 弹药与弹药盒。")
                 .define("crateAmmoOnly", false);
+        builder.pop();
+
+        builder.push("sb_sync");
+        SB_AMMO_SYNC = builder
+                .comment("Push SB backpack contents to the carrier's client whenever they change, so ammo count / upgrade toggle stay in sync outside the SB GUI. Fixes: ghost firing after emptying, stale HUD, toggle not taking effect.",
+                        "SB 背包内容变更时主动推送给携带者客户端，GUI 外弹药计数/升级开关保持同步。",
+                        "修复：射空后假开枪、HUD 计数不刷新、GUI 内开关升级不生效（须重开背包才恢复）。")
+                .define("enabled", true);
+        SB_AMMO_SYNC_INTERVAL = builder
+                .comment("Push interval in server ticks (1 = every tick, lowest latency; raise to save bandwidth on busy servers).",
+                        "推送间隔（服务端 tick）：1 = 每 tick，延迟最低（幻影窗口 ≈ 原版背包直读枪）；调大可省带宽。")
+                .defineInRange("intervalTicks", 1, 1, 20);
         builder.pop();
 
         builder.push("enchantments");
