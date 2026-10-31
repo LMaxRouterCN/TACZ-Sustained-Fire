@@ -644,3 +644,33 @@ M15 版注释「精妙背包的供弹不受本开关影响（走 SB 供弹升级
 - [ ] 动码：b1（SbCompat 静态判定 + 源 2 循环跳过）/ 箱中箱（skip 换带清扫源）/ 配方（JSON {Level:2} + RecipeSerializer 继承弹药）/ C 两件套
 - [ ] 验证清单：原 7 项 + 无升级 SB 供弹 + HUD 含容器弹 + 潜影盒存档回滚 + SB 箱内同步
 - [ ] commit（12 文件 + 本轮改动）
+### M16 状态（2026-11-01，构建部署完成，待 max 验证）
+
+C 立项两件套 + b1 合并修复 + SB 推送面扩张 + 合成配方系统全部落地。commit c236257（M15+M16 合并提交，18 文件 +1066/-432），四轮编译勘误后终绿。
+
+落地清单：
+- AmmoSourceResolver：appendExpandedSources（查询侧源 2 补齐，预检/HUD 与消耗侧共用）+ crateSource 箱中箱复合 sweep（内层 flush 先行、BE sweep 收尾）
+- SbCompat/SbCompatImpl：tryAppendBackpackSource 三态门面（skipUpgraded 三参，b1：玩家背包上下文 true 防源 2/源 5 双计；箱内 false——源 5 挂载点是玩家携带 SB，够不着箱内树，skip 即两头断供）
+- SbAmmoSyncManager：collectUpgradeTreeUuids 改 collectCarrierTreeUuids 读数树（身上 expandGate||hasUpgrade 门票，箱内 expandInside+半径槽扫）——SB 进弹药箱不同步修复
+- AmmoCrateRecipe + ModRecipeSerializers：sustainedfire:ammo_crate 自定义合成（ShapedRecipe 组合委托；assemble 动态产物 BlockEntityTag.Items+sf:fill；getRemainingItems 盒守恒）
+- 主类注册行 + ammo_crate.json（D 键 partial_nbt {Level:2} 任意弹态）+ Config 注释落档（SUPPLY 三态/EXPAND_INSIDE）
+
+过程事故留档（全我方失误，根因均实证，memory 066/067）：
+1. SbCompat insert 锚点选在方法体最后一行 return 上，新方法插进方法体内（编译报非法表达式开始）——括号换位修复
+2. SbCompat 漏 ItemStack import（原门面方法签名不含该类型）
+3. getCategory() 是 1.20.5+ 改名，1.20.1 实为 category()——先错判"方法不存在"走删码路线，删后报"未实现抽象方法 category()"才暴露真名；诊断教训：找不到符号不等于概念不存在，同样兼容名字不同假设，删码是最激进路线应证据完备后再走
+4. getId() 漏写（实现 MC 接口前应先枚举抽象方法清单，javac 逐个点名=每轮 1-2 分钟构建税）
+5. 部署事故：build\libs 残留的 0.1.0 旧 jar 被通配拷入 mods（双 modid=Forge 启动 Duplicate Mods 崩溃屏），已删——教训：部署按 gradle.properties 当前版本号精确匹配，部署后枚举 mods 核对同 modid 唯一性
+
+设计偏差（max 授权范围内修正，可否决）：
+- remainder 语义：拍板 1 原语义=弹药实塞箱内（tacz 弹药 stacksTo(1)，36 格封顶 36 发），钻石盒数百发会吞 99%——已修正为 vanilla remainder 守恒：能塞多少塞多少（36 发上限），剩余留在返还的原盒内
+- 满盒（>36 发）合成行为：箱内 36 发 + 原盒退回（剩余弹药保留在盒中）
+
+部署：sustainedfire-1.0.0.jar（290359B，SHA256 91879A6BB40D1289）已入测试实例 mods，旧 0.1.0 已清除。
+
+留档未修（承接）：
+- hasAmmoToConsume 动画条件只扫裸背包（M15 留档，换弹动画可能与实际供弹源不符）
+- 潜影盒识别边界：通用展开闸全开组合下行为待实测定性（查询侧主路径已由 M16-C 覆盖）
+
+验证清单（待 max 游戏内）：
+M15 原 7 项照旧（见上文 L558 节）+ M16 新增 6 项：无升级 SB 供弹 / HUD 容器弹药计数 / 潜影盒回滚 / SB 箱内同步 / 箱内带升级 SB / 满盒>36 发合成返还
