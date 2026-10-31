@@ -1,11 +1,11 @@
 package com.lmaxroutercn.sustainedfire.compat.sb;
 
 import com.lmaxroutercn.sustainedfire.SustainedFire;
+import com.lmaxroutercn.sustainedfire.ammo.AmmoSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModList;
-import net.minecraftforge.items.IItemHandler;
 
 import java.util.List;
 
@@ -13,6 +13,11 @@ import java.util.List;
  * SB 联动门面：通用代码只允许 import 本类（本类零 SB/SC/Curios 引用）。
  * 实现引用全部下放 SbCompatImpl / CuriosBackpackCollector——
  * 方法体内的类引用是惰性解析的，SB 缺席时守卫分支不执行，实现类零加载，不会 NoClassDefFoundError。
+ *
+ * [M14] collectAmmoSources 返回类型 IItemHandler → AmmoSource：
+ * 每个源携带自己的直写清扫 sweep（TACZ 对弹药盒 setAmmoCount 直改 NBT
+ * 绕过一切 handler op，消耗完成后需要各源自行落地，见 ExternalConsumeSweep）。
+ * AmmoSource 是本项目 ammo 包类型，门面引用无碍（隔离红线只针对 SB/SC/Curios）。
  */
 public final class SbCompat {
     private static boolean sbPresent = false;
@@ -35,9 +40,10 @@ public final class SbCompat {
 
     /**
      * 收集"装了启用供弹升级"的 SB 背包弹药源（消耗/预检/HUD 三链路共用）。
+     * [M14] 源含 sweep（树级直写清扫 / 背包内弹药箱副本的 flush+fire）。
      * SB 缺席时返回空列表。
      */
-    public static List<IItemHandler> collectAmmoSources(LivingEntity shooter) {
+    public static List<AmmoSource> collectAmmoSources(LivingEntity shooter) {
         if (!sbPresent) {
             return List.of();
         }

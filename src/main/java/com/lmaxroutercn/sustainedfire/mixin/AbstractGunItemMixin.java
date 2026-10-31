@@ -1,6 +1,7 @@
 package com.lmaxroutercn.sustainedfire.mixin;
 
 import com.lmaxroutercn.sustainedfire.ammo.AmmoSourceResolver;
+import com.lmaxroutercn.sustainedfire.ammo.ExternalConsumeSweep;
 import com.lmaxroutercn.sustainedfire.registry.ModEnchantments;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
@@ -9,6 +10,7 @@ import com.tacz.guns.util.AttachmentDataUtils;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraftforge.items.IItemHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,6 +29,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *   与 taczaddon 等第三方背包扩展（getCapability @Redirect）双装共存，
  *   语义为并集：他们扩展背包侧，我们兜弹药箱侧。
  *   高频 true 路径原方法短路返回，不再构建组合视图，性能更优。
+ * - [M14] findAndExtractInventoryAmmo 的 RETURN 钩：弹药盒直写清扫
+ *   （见 sf$sweepAfterExternalConsume 注释）。
  * 与 ragnarok 的 MakeGunEnchantableMixin（isEnchantable/getEnchantmentValue/
  * canApplyAtEnchantingTable）注入点完全不相交。
  *
@@ -101,5 +105,32 @@ public class AbstractGunItemMixin {
         }
         // 背包侧已查过——兜弹药箱
         cir.setReturnValue(AmmoSourceResolver.hasAmmoInCrates(shooter, gunItem));
+    }
+
+    /**
+     * [M14] 弹药盒直写清扫钩：findAndExtractInventoryAmmo 的 IAmmoBox 分支
+     * （源码 L250-257）setAmmoCount 直改 ItemStack NBT，绕过一切 handler 写操作
+     * → 挂在 op 上的同步/持久化链（M12 SC 四漏斗 / 弹药箱 BE onContentsChanged /
+     * InInventoryCrateHandler 副本写回）全部失明——「盒在 SB/世界箱内不同步」
+     * 与「盒在物品态箱内消耗后存档回滚」的共同根因。
+     * 本钩在消耗完成后触发组合视图（ExternalConsumeSweep）的统一清扫，
+     * 一次修三层（写回 / 标脏 / 推送）。
+     *
+     * 调用面（源码实证 2026-10-31）：LivingEntityShoot:280 + MKGSA:550 两个
+     * 服务端调用方；复数包装 findAndExtractInventoryAmmos（L227-228）纯委托
+     * 单数版无独立逻辑——只注单数版即全覆盖。
+     * 与 taczaddon 的注入点（hasInventoryAmmo / canReload 的 @Redirect）
+     * 不同方法，零冲突；mixins.json 零改动（本类已注册）。
+     *
+     * @At("RETURN")（全返回指令）而非 TAIL：方法体单 return（L264），
+     * 但 RETURN 对未来多 return 情形防御性更优；sweep 幂等，多次触发无害。
+     */
+    @Inject(method = "findAndExtractInventoryAmmo(Lnet/minecraftforge/items/IItemHandler;Lnet/minecraft/world/item/ItemStack;I)I",
+            at = @At("RETURN"), remap = false)
+    private void sf$sweepAfterExternalConsume(IItemHandler itemHandler, ItemStack gunItem, int needAmmoCount, CallbackInfoReturnable<Boolean> ci) {
+        // 仅我方组合视图实现清扫接口；其他 handler（原版 cap / 第三方视图）零动作
+        if (itemHandler instanceof ExternalConsumeSweep sweep) {
+            sweep.afterExternalConsume();
+        }
     }
 }

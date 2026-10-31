@@ -29,7 +29,7 @@ import java.util.List;
  * （canReload / hasInventoryAmmo 预测），客户端数据来自 BE 的 getUpdateTag 同步。
  *
  * 2026-10-28 结构拆分：chunk 网格扫描收敛到私有 collectNearbyCrates 核心，
- * getNearbyAmmoBoxes（供弹 handler）与 getNearbyAmmoBoxPositions（黄线框渲染）
+ * getNearbyAmmoCrates（供弹 handler）与 getNearbyAmmoBoxPositions（黄线框渲染）
  * 两个消费方共享同一口径——高亮集合 ≡ 供弹集合，所见即所得。
  */
 public final class AmmoSourceRegistry {
@@ -37,7 +37,7 @@ public final class AmmoSourceRegistry {
 
     /**
      * 核心扫描：shooter AABB+radius 内且 OPEN 的弹药箱 BE 列表。
-     * AABB 用实体包围盒 inflate(radius)（与原 getNearbyAmmoBoxes 实现一致，行为不变）。
+     * AABB 用实体包围盒 inflate(radius)（与原 getNearbyAmmoCrates 实现一致，行为不变）。
      */
     private static List<AmmoCrateBlockEntity> collectNearbyCrates(LivingEntity shooter, double radius) {
         Level level = shooter.level();
@@ -92,23 +92,18 @@ public final class AmmoSourceRegistry {
         return false;
     }
     /**
-     * 获取 shooter 周围有效半径内的弹药箱物品处理器（已按开盖状态过滤）。
-     *
-     * @param shooter 射手（取位置与所在维度）
-     * @param radius 查找半径（格，来自 config）
-     * @return 弹药箱 IItemHandler 列表（新建列表）
+     * [M14] BE 级访问：消耗侧构建弹药源需要 BE 身份（sweepExternalAmmoBoxChange
+     * 的外部直写清扫挂在 BE 上），handler 级视图（getNearbyAmmoCrates）不携带。
+     * 与 getNearbyAmmoCrates / getNearbyAmmoBoxPositions 同一 collectNearbyCrates
+     * 核心 + OPEN 过滤——三口径零漂移。
      */
-    public static List<IItemHandler> getNearbyAmmoBoxes(LivingEntity shooter, double radius) {
-        List<IItemHandler> result = new ArrayList<>();
-        for (AmmoCrateBlockEntity crate : collectNearbyCrates(shooter, radius)) {
-            result.add(crate.getItemHandler());
-        }
-        return result;
+    public static List<AmmoCrateBlockEntity> getNearbyAmmoCrates(LivingEntity shooter, double radius) {
+        return collectNearbyCrates(shooter, radius);
     }
 
     /**
      * 供弹范围内（OPEN 且对该枪有可用弹药）的弹药箱坐标列表：黄线框渲染用（M7b 引入，M8 加弹药过滤）。
-     * 与 getNearbyAmmoBoxes / hasAmmoInCrates 走同一 collectNearbyCrates 核心 + containsAmmoForGun 谓词，
+     * 与 getNearbyAmmoCrates / hasAmmoInCrates 走同一 collectNearbyCrates 核心 + containsAmmoForGun 谓词，
      * 保证"被高亮的箱子"与"实际可供弹的箱子"严格同源——空箱不高亮，装错弹药的箱也不高亮。
      *
      * @param shooter 射手（取位置与所在维度）
