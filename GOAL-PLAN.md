@@ -464,3 +464,62 @@ loot 定谳（同轮）：minecraft:contents 非 1.20.1 函数 id——vanilla s
 5. 验证欠账：M11 三开关（expandContainerItems / backpackUsable / crateAmmoOnly）行为+附魔 config 数值生效性+背包内弹药箱供弹性能，无显式签收记录
 6. M8/M9 视觉待验（约14项：贴墙透视/粒子绿/无货不高亮/四向盖位/填充抬升/挡脚/老箱归北等）——游玩顺带扫
 7. 小事：渐进射速 1200rpm 天花板接受/突破待定（M5 遗留）；taczaddon 双装共存运行时实证未做（jar 已移出测试实例，装回才相关）
+## M14 弹药盒直写清扫（2026-10-31，max 报 bug 根治）
+
+### 症状（max 实测）
+1. 装弹药的弹药盒放入带供弹升级的 SB 背包 → M12 三症状复现（假开枪/HUD 不动/开关升级假象）
+2. 盒放入世界弹药箱（BE）→ 同样不同步
+3. 盒拿在手里 → 正常（vanilla broadcastChanges 每 tick NBT 深比较兜底）
+
+### 根因（源码实证）
+TACZ findAndExtractInventoryAmmo（AbstractGunItem L238-265）对 IAmmoBox 走 setAmmoCount
+直改 ItemStack NBT，绕过一切 handler 写操作（IAmmo 走 extractItem 正常）：
+- SB 内：M12 的 SC onContentsChanged 漏斗全盲 → 无推送 → 客户端镜像死水
+- 世界箱 BE：onContentsChanged 不触发 → setChanged/sendBlockUpdated 双失明
+- 玩家背包内弹药箱物品：InInventoryCrateHandler 是反序列化副本，直改连"写回箱物品 NBT"
+  都没有 → 服务端存档回滚（比同步丢失更深一层）
+调用面：LivingEntityShoot:280 + MKGSA:550 两服务端调用方；复数包装纯委托无独立逻辑。
+
+### 修复架构（事件驱动：RETURN 钩 → sweep 链）
+- 载体：AmmoSource record(handler, Runnable sweep)——每个弹药源携带自己的直写清扫
+- 接口：ExternalConsumeSweep{afterExternalConsume()}，CombinedView 实现（delegates+sweeps 双数组）
+- 钩子：AbstractGunItemMixin 新增 findAndExtractInventoryAmmo @Inject(RETURN)，
+  instanceof ExternalConsumeSweep 触发；mixins.json 零改动；与 taczaddon 注入点零冲突
+- 各源 sweep：裸背包/通用展开=null（vanilla broadcast 兜）；物品态箱副本=flushExternalDirectWrites
+  （写回含盒才触发）；世界箱 BE=sweepExternalAmmoBoxChange（含盒才 setChanged+推送）；
+  SB=树级清扫（盒槽位 fire onContentsChanged——SC 官方智能写回：NBT 深比较→序列化回
+  SavedData 活引用→markDirty→M12 mixin 漏斗自动接力推送；GUI 编辑等效路径）
+- 客户端预测路径 fire 落客户端镜像：HUD 读数即刻修正（比服务端推送快一拍），双端无害
+
+### 附带特性（max 2026-10-31 拍板）
+我们的弹药箱放进 SB 供弹升级背包内同样供弹（backpackUsable 门统一语义：
+物品态弹药箱作为弹药源，与所在容器无关）。树遍历收集 InInventoryCrateHandler 副本源
+（count==1 守卫），sweep 闭包捕获建源实例（新鲜副本防）+ 节点 fire（NBT 变化进 SavedData）。
+
+### 已知边界
+- expandContainerItems 闸开且 SB 内含盒时通用展开源的盒直写无人清扫（默认闸关碰不到）
+- SB persistent=false 窗口（GUI 频繁变动期）fire 被 SC 自身守卫跳过（SB 官方语义，罕见组合）
+- 清扫 fire 的 partitioner 路径对盒 NBT 直改理论无害（分区按物品身份非 NBT）
+
+### 文件清单（M14）
+新增：ammo/AmmoSource.java、ammo/ExternalConsumeSweep.java
+重写：ammo/AmmoSourceResolver.java（CombinedView 双数组+查询共用 buildExtendedSources）、
+ammo/InInventoryCrateHandler.java（writeBack 抽取+flush）、
+block/entity/AmmoCrateBlockEntity.java（onInventoryContentsChanged 抽取+sweep）、
+compat/sb/SbCompat.java（签名）、compat/sb/SbCompatImpl.java（树扫+箱副本源）、
+mixin/AbstractGunItemMixin.java（RETURN 钩）
+修改：ammo/AmmoSourceRegistry.java（getNearbyAmmoCrates BE 级访问）
+
+### 验证矩阵（2026-10-31 六组全过，max 签收）
+1. 盒在 SB：射空后 HUD 归零、无假开枪、重进存档盒计数正确（持久化）
+2. 盒在世界箱：消耗后 HUD 跟随、存档正确
+3. 盒手持：回归正常（vanilla 路径不受影响）
+4. 盒在玩家背包内箱物品里（backpackUsable 开）：供弹+存档不回滚
+5. 我们的弹药箱在 SB 内（backpackUsable 开——默认 false 测前必开！）：供弹+HUD+存档
+6. M12 七项回归（普通弹药走 extractItem，sweep 链对 IAmmo 路径零新增动作）
+
+### M14 状态（2026-10-31，max 验收关账）
+- 六组验证矩阵全过（游戏内实测签收）：①盒在带升级SB背包（重进存档盒计数正确，核心判据）②盒在世界弹药箱 ③盒手持回归 ④盒在玩家背包内箱物品（backpackUsable 开）⑤我们的弹药箱在SB（backpackUsable 开）⑥M12 七项回归
+- 首版 jar 崩在 mixin APPLY：sf$sweepAfterExternalConsume 回调误用裸 CallbackInfo，而目标 findAndExtractInventoryAmmo 返回 boolean，必须 CallbackInfoReturnable——该错误编译期不查（对 javac 只是普通参数），运行时 APPLY 阶段才校验，构建绿游戏炸（InvalidInjectionException: CallbackInfoReturnable is required）
+- 修复：一行换回调类型+删死 import，修复 jar 字节级核验（部署 jar 类内裸 CallbackInfo 描述符=0）后验收通过
+- 踩坑留档：mixin @Inject 回调类型必须匹配目标方法返回类型（void→CallbackInfo，有返回值→CallbackInfoReturnable），新写注入须逐参数对照目标方法签名
