@@ -110,10 +110,10 @@ mixin注入点均为最小拦截，不复制TACZ代码。
 3. [x] 源码调研（2026-10-27完成，结论见第六节）
 4. [x] 项目骨架（build.gradle、主类、注册体系、libs复制、mixin配置）
 5. [x] 附魔实现（冷却/风冷/弹链/预热/渐进射速）
-6. [ ] 弹药箱方块（step1✅ 0344123 / step2✅ 7885a57 / step3✅ c8d63f0 / step4✅ 3100881 / step5 漏斗+集成测试（黄线框降级为可选视觉特性，待 max 拍板））
-7. [ ] SB联动
+6. [x] 弹药箱方块（step1✅ 0344123 / step2✅ 7885a57 / step3✅ c8d63f0 / step4✅ 3100881 / step5✅ 漏斗经 M11 isItemValid 统一准入实现（javap 实证 insertItem 首步调用，漏斗/GUI/shift/光标四入口）+黄线框 M7b 方案A落地+M6 验收与 M10-M13 生存实测；漏斗单项留顺手目验）
+7. [x] SB联动（M10 升级物品+三链路 / M12 同步系 / M12.1 gating / M12.2 守卫 / M12.3 loot / M13 tooltip+贴图；2026-10-31 验收关账）
 8. [x] 构建通过、commit
-9. [ ] 发布准备（README双语、许可证、图标）
+9. [ ] 发布准备（README双语、许可证定稿、图标、版本号、配方、剩余贴图、HARDCODE-AUDIT B组拍板——开放项明细见文末盘点节）
 
 ## 十、运行时状态（agent工作日志）
 - 2026-10-27：项目启动，源码调研开始
@@ -451,3 +451,16 @@ loot 定谳（同轮）：minecraft:contents 非 1.20.1 函数 id——vanilla s
 - 物品层 super 链排除（UpgradeItemBase / ItemBase javap 均无 appendHoverText）
 
 - [贴图 2026-10-31] ammo_feed_upgrade 正式材质（32x32）替换占位，模型不变
+## M13 关账盘点（2026-10-31，全量开放项扫描）
+
+### 文档滞后（本轮同步）
+- 里程碑6/7 实为完成（明细见里程碑行），仅复选框未勾。
+
+### 开放项清单（按优先级）
+1. 发布准备：README 双语 / 许可证定稿（第五节 GPL 争议）/ mod 图标 / 版本号策略（0.1.0 未动）/ ammo_feed_upgrade 配方
+2. 正式贴图 5 张（item feed 今日正稿外全部占位：方块系+inner+GUI 176x186）
+3. HARDCODE-AUDIT.md：a034fff 提交时被 git add -A 固化删除（无本方操作记录，疑案未破）；恢复命令 git checkout 5ece19e -- HARDCODE-AUDIT.md；恢复后 B 组 15 项硬编码拍板（A 组 18 键 M11 已进 config）
+4. 技术遗留：GunAnimationStateContext:168 hasAmmoToConsume 箱侧无人管（见 6.5 节）——弹链枪「背包空+箱有弹」动画状态机可能不同步，未验证未处理
+5. 验证欠账：M11 三开关（expandContainerItems / backpackUsable / crateAmmoOnly）行为+附魔 config 数值生效性+背包内弹药箱供弹性能，无显式签收记录
+6. M8/M9 视觉待验（约14项：贴墙透视/粒子绿/无货不高亮/四向盖位/填充抬升/挡脚/老箱归北等）——游玩顺带扫
+7. 小事：渐进射速 1200rpm 天花板接受/突破待定（M5 遗留）；taczaddon 双装共存运行时实证未做（jar 已移出测试实例，装回才相关）
