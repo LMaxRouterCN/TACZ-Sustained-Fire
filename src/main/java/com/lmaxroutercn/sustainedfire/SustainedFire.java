@@ -9,6 +9,7 @@ import com.lmaxroutercn.sustainedfire.registry.ModCreativeTabs;
 import com.lmaxroutercn.sustainedfire.registry.ModEnchantments;
 import com.lmaxroutercn.sustainedfire.registry.ModItems;
 import com.lmaxroutercn.sustainedfire.registry.ModMenus;
+import com.lmaxroutercn.sustainedfire.registry.ModRecipeSerializers;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -38,6 +39,8 @@ public class SustainedFire {
 
         // 菜单注册（step2：弹药箱 GUI）
         ModMenus.MENUS.register(modBus);
+        // [M16] 配方序列化器：弹药箱动态产物合成（AmmoCrateRecipe——弹药随行+盒守恒返还）
+        ModRecipeSerializers.RECIPE_SERIALIZERS.register(modBus);
 
         // 创造模式标签页（附魔书一览 + 弹药箱）
         ModCreativeTabs.TABS.register(modBus);

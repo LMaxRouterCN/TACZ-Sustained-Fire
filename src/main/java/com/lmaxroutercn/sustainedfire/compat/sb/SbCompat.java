@@ -1,4 +1,6 @@
 package com.lmaxroutercn.sustainedfire.compat.sb;
+// [M16] tryAppendBackpackSource 门面签名需要（原门面方法不含 ItemStack 参数故此前未 import）
+import net.minecraft.world.item.ItemStack;
 
 import com.lmaxroutercn.sustainedfire.SustainedFire;
 import com.lmaxroutercn.sustainedfire.ammo.AmmoSource;
@@ -48,6 +50,21 @@ public final class SbCompat {
             return List.of();
         }
         return SbCompatImpl.collectAmmoSources(shooter);
+    }
+
+    /**
+     * [M16] SB 背包三态判定+源追加（AmmoSourceResolver.appendExpandedSources 调用，
+     * 消耗/查询两线共用）。
+     * 三态：非 SB 背包 → false（调用方走通用 cap 展开）；SB 且带启用升级且
+     * skipUpgraded（玩家背包上下文，源 5 在场）→ true（skip 防双计，b1）；
+     * 其余 SB → 追加专用源（root IO + 树清扫）返回 true。
+     * SB 缺席恒 false（通用 cap 分支自然接管，无 SB 类引用）。
+     */
+    public static boolean tryAppendBackpackSource(ItemStack stack, List<AmmoSource> out, boolean skipUpgraded) {
+        if (!sbPresent) {
+            return false;
+        }
+        return SbCompatImpl.tryAppendBackpackSource(stack, out, skipUpgraded);
     }
 
     /** 创造标签页展示（SB 缺席时 no-op） */

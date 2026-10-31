@@ -104,18 +104,49 @@ public final class SbCompatImpl {
                         SbAmmoSyncManager.refreshStaleTree(wrapper);
                         if (!wrapper.getUpgradeHandler()
                                 .getTypeWrappers(AmmoFeedUpgradeItem.TYPE).isEmpty()) {
-                            // root IO 视图（含嵌套子背包展开）：唯一 SB 消耗视图（嵌套双计防）
-                            // sweep = 树级直写清扫（各节点盒槽位 fire）
-                            result.add(new AmmoSource(wrapper.getInventoryForInputOutput(),
-                                    () -> sweepTreeDirectWrites(wrapper)));
-                            // [M14] 背包内弹药箱：backpackUsable 门下树遍历收集副本源
-                            if (SustainedFireConfig.booleanOr(SustainedFireConfig.AMMO_CRATE_BACKPACK_USABLE)) {
-                                collectCrateSourcesInTree(wrapper, result, new HashSet<>());
-                            }
+                            // [M16] 主体抽取至 appendBackpackSourceBody（与容器展开路径
+                            // tryAppendBackpackSource 共用同一份源构造逻辑，行为不变重构）
+                            appendBackpackSourceBody(wrapper, result, new HashSet<>());
                         }
                     });
         }
         return result;
+    }
+
+    /**
+     * [M16] SB 三态判定+专用源追加（AmmoSourceResolver.appendExpandedSources 调用，
+     * 消耗/查询两线共用）。
+     * skipUpgraded：玩家背包上下文 true（源 5 在场，带升级 SB skip 防双计，b1）；
+     * 箱内上下文 false（源 5 只扫玩家身上 candidates，箱内带升级 SB 若 skip 即
+     * 两头断供——b1 是防双计手段而非升级独占原则，无双计风险的上下文不 skip）。
+     * 返回 true = 本物品已处理（SB 或 skip）；false = 非 SB（调用方走通用 cap）。
+     */
+    static boolean tryAppendBackpackSource(ItemStack stack, List<AmmoSource> out, boolean skipUpgraded) {
+        return stack.getCapability(CapabilityBackpackWrapper.getCapabilityInstance())
+                .map(wrapper -> {
+                    // [M12] 客户端镜像消费：读弹药前刷陈旧树（服务端线程守卫内零成本跳过）
+                    SbAmmoSyncManager.refreshStaleTree(wrapper);
+                    if (skipUpgraded && !wrapper.getUpgradeHandler()
+                            .getTypeWrappers(AmmoFeedUpgradeItem.TYPE).isEmpty()) {
+                        // [M16-b1] 带启用升级且源 5 在场：skip，源 5 独占防双计
+                        return true;
+                    }
+                    appendBackpackSourceBody(wrapper, out, new HashSet<>());
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    /** [M16] 专用源主体（行为不变重构）：collectAmmoSources 与 tryAppendBackpackSource 共用 */
+    private static void appendBackpackSourceBody(IBackpackWrapper wrapper, List<AmmoSource> out, Set<UUID> visited) {
+        // root IO 视图（含嵌套子背包展开）：唯一 SB 消耗视图（嵌套双计防）
+        // sweep = 树级直写清扫（各节点盒槽位 fire）
+        out.add(new AmmoSource(wrapper.getInventoryForInputOutput(),
+                () -> sweepTreeDirectWrites(wrapper)));
+        // [M14] 背包内弹药箱：backpackUsable 门下树遍历收集副本源
+        if (SustainedFireConfig.booleanOr(SustainedFireConfig.AMMO_CRATE_BACKPACK_USABLE)) {
+            collectCrateSourcesInTree(wrapper, out, visited);
+        }
     }
 
     /**
@@ -167,7 +198,12 @@ public final class SbCompatImpl {
                     continue;
                 }
                 if (s.getItem() instanceof AmmoCrateBlockItem && s.getCount() == 1) {
-                    InInventoryCrateHandler copy = new InInventoryCrateHandler(s);
+                    // [M15] 经物品 cap 取缓存活实例（与玩家背包内箱、外部读取共用同一副本）
+                    InInventoryCrateHandler copy = (InInventoryCrateHandler) s.getCapability(
+                            net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER, null).resolve().orElse(null);
+                    if (copy == null) {
+                        continue; // 防御：cap 意外缺席时跳过（正常路径恒非空）
+                    }
                     int slot = i;
                     out.add(new AmmoSource(copy, () -> {
                         // 副本直改写回 SB 槽位 stack NBT，再 fire 该槽（NBT 变化进 SavedData + M12 推送）

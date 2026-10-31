@@ -24,6 +24,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.ForgeRegistries;
+import com.lmaxroutercn.sustainedfire.ammo.InInventoryCrateHandler;
+import net.minecraft.core.Direction;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -40,6 +48,8 @@ import java.util.Map;
  * 3. 耐久条 = 已占用槽位 / 36（空箱隐藏，绿色，对齐 tacz 弹药盒观感）。
  * 4. "sf:fill" 整数 NBT：挖掘捕获与光标交互时写入的占用槽数缓存，
  *    供耐久条与物品模型谓词 sustainedfire:open 做 O(1) 读取，避免每帧反序列化 36 格。
+ * 5. [M15] 存储 capability：物品态箱子向外暴露 36 格 IItemHandler（每 ItemStack 实例
+ *    一份缓存活副本，与供弹链/光标交互共用）；stacksTo(1) 唯一物品语义。
  */
 public class AmmoCrateBlockItem extends BlockItem {
     /** 占用槽数缓存键（挖掘捕获与光标交互时写入） */
@@ -75,6 +85,42 @@ public class AmmoCrateBlockItem extends BlockItem {
         return tag != null ? tag.getInt(TAG_FILL) : 0;
     }
 
+    // ---------- [M15] 存储 capability 暴露 ----------
+
+    /**
+     * [M15 max 2026-10-31 拍板] 物品态弹药箱向外暴露 36 格存储：供弹链之外的系统
+     * （其他 mod 的容器扫描、通用展开等）也能读写。每个 ItemStack 实例缓存一个活
+     * InInventoryCrateHandler（Forge 物品级 capability 模式，与 SB 背包、Forge 潜影盒
+     * 物品 wrapper 同构），与供弹链（AmmoSourceResolver 源 3）共用同一实例——
+     * 全项目对一把箱物品只有一份活副本。
+     */
+    @Override
+    public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
+        return new CrateStorageProvider(stack);
+    }
+
+    /** 物品级存储 cap 持有者：查询时校验堆叠数，count==1 才给缓存实例 */
+    private static final class CrateStorageProvider implements ICapabilityProvider {
+        private final ItemStack stack;
+        private final LazyOptional<IItemHandler> handler;
+
+        CrateStorageProvider(ItemStack stack) {
+            this.stack = stack;
+            // lambda 捕获构造参数（effectively final）：字段初始化器先于构造器执行，
+            // 那里引用 this.stack 会被 javac 判「可能尚未初始化」——上轮唯一编译错误
+            this.handler = LazyOptional.of(() -> new InInventoryCrateHandler(stack));
+        }
+
+        @Override
+        public <T> LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction side) {
+            // count 守卫（与源 3 收集守卫同口径）：多叠旧物品不作为容器暴露
+            if (cap == ForgeCapabilities.ITEM_HANDLER && stack.getCount() == 1) {
+                return handler.cast();
+            }
+            return LazyOptional.empty();
+        }
+    }
+
     // ---------- 背包光标交互（对齐 tacz 弹药盒） ----------
 
     @Override
@@ -103,69 +149,48 @@ public class AmmoCrateBlockItem extends BlockItem {
         return AmmoCrateInventoryHandler.canAccept(stack);
     }
 
+    /** [M15] 光标交互经 capability 缓存实例操作：与供弹链/外部读取共用同一活副本
+     *  （旧 loadHandler/saveHandler 每次新建副本，会与 cap 缓存实例分叉）。
+     *  多叠旧物品无 cap 暴露 → 回落 vanilla 行为（不消费、不写 NBT）。 */
+    private static boolean withCrateHandler(ItemStack crateStack, Function<ItemStackHandler, Boolean> action) {
+        return crateStack.getCapability(ForgeCapabilities.ITEM_HANDLER, null)
+                .map(h -> action.apply((ItemStackHandler) h))
+                .orElse(false);
+    }
+
     /** 取出：顶向下第一格非空内容（取出侧不过滤——能装的自然能取），整组（上限一堆）放入被点空格 */
     private static boolean takeAmmoFromCrate(ItemStack crateStack, Slot slot, Player player) {
-        ItemStackHandler handler = loadHandler(crateStack);
-        for (int i = 0; i < handler.getSlots(); i++) {
-            ItemStack ammo = handler.getStackInSlot(i);
-            if (ammo.isEmpty()) {
-                continue;
+        return withCrateHandler(crateStack, handler -> {
+            for (int i = 0; i < handler.getSlots(); i++) {
+                ItemStack ammo = handler.getStackInSlot(i);
+                if (ammo.isEmpty()) {
+                    continue;
+                }
+                ItemStack taken = handler.extractItem(i, ammo.getMaxStackSize(), false);
+                // 被点格是空的，safeInsert 必然成功；leftover 兜底塞回防丢失
+                ItemStack leftover = slot.safeInsert(taken);
+                if (!leftover.isEmpty()) {
+                    insertAll(handler, leftover);
+                }
+                playRemoveOneSound(player);
+                return true;
             }
-            ItemStack taken = handler.extractItem(i, ammo.getMaxStackSize(), false);
-            // 被点格是空的，safeInsert 必然成功；leftover 兜底塞回防丢失
-            ItemStack leftover = slot.safeInsert(taken);
-            if (!leftover.isEmpty()) {
-                insertAll(handler, leftover);
-            }
-            playRemoveOneSound(player);
-            saveHandler(crateStack, handler);
-            return true;
-        }
-        return false;
+            return false;
+        });
     }
 
     /** 存入：整组合堆收入，剩余（箱满）留在原格 */
     private static boolean depositIntoCrate(ItemStack crateStack, Slot slot, ItemStack slotItem, Player player) {
-        ItemStackHandler handler = loadHandler(crateStack);
-        ItemStack remainder = insertAll(handler, slotItem.copy());
-        if (remainder.getCount() == slotItem.getCount()) {
-            // 一发都没装进去：箱满/无堆位，不消费
-            return false;
-        }
-        slot.set(remainder);
-        playInsertSound(player);
-        saveHandler(crateStack, handler);
-        return true;
-    }
-
-    // ---------- 物品 NBT <-> 36 格容器 ----------
-
-    /** 从物品 BlockEntityTag.Items 恢复一个 36 格容器视图 */
-    private static ItemStackHandler loadHandler(ItemStack stack) {
-        AmmoCrateInventoryHandler handler = new AmmoCrateInventoryHandler(AmmoCrateBlockEntity.CONTAINER_SIZE);
-        CompoundTag beTag = stack.getTagElement("BlockEntityTag");
-        if (beTag != null) {
-            // 与 AmmoCrateBlockEntity.saveAdditional 写入的 Items 键同构
-            handler.deserializeNBT(beTag.getCompound("Items"));
-        }
-        return handler;
-    }
-
-    /** 写回物品 NBT 并同步 sf:fill 缓存 */
-    private static void saveHandler(ItemStack stack, ItemStackHandler handler) {
-        stack.getOrCreateTagElement("BlockEntityTag").put("Items", handler.serializeNBT());
-        stack.getOrCreateTag().putInt(TAG_FILL, countOccupied(handler));
-    }
-
-    /** 统计占用槽数（耐久条/模型谓词的分子） */
-    private static int countOccupied(ItemStackHandler handler) {
-        int n = 0;
-        for (int i = 0; i < handler.getSlots(); i++) {
-            if (!handler.getStackInSlot(i).isEmpty()) {
-                n++;
+        return withCrateHandler(crateStack, handler -> {
+            ItemStack remainder = insertAll(handler, slotItem.copy());
+            if (remainder.getCount() == slotItem.getCount()) {
+                // 一发都没装进去：箱满/无堆位，不消费
+                return false;
             }
-        }
-        return n;
+            slot.set(remainder);
+            playInsertSound(player);
+            return true;
+        });
     }
 
     /** 通用合堆插入：先同 ID 同 NBT 合堆，再进空位 */

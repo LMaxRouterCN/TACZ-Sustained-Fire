@@ -523,3 +523,124 @@ mixin/AbstractGunItemMixin.java（RETURN 钩）
 - 首版 jar 崩在 mixin APPLY：sf$sweepAfterExternalConsume 回调误用裸 CallbackInfo，而目标 findAndExtractInventoryAmmo 返回 boolean，必须 CallbackInfoReturnable——该错误编译期不查（对 javac 只是普通参数），运行时 APPLY 阶段才校验，构建绿游戏炸（InvalidInjectionException: CallbackInfoReturnable is required）
 - 修复：一行换回调类型+删死 import，修复 jar 字节级核验（部署 jar 类内裸 CallbackInfo 描述符=0）后验收通过
 - 踩坑留档：mixin @Inject 回调类型必须匹配目标方法返回类型（void→CallbackInfo，有返回值→CallbackInfoReturnable），新写注入须逐参数对照目标方法签名
+
+## M15 发布冲刺 + 物品 cap 暴露 + 箱内容器展开（2026-10-31 深夜，max 饭点拍板后执行）
+
+### max 拍板（饭点口述逐条）
+- 已闭：HARDCODE-AUDIT 不恢复（max 已看过）/ 许可证 MPL-2.0 不动 / 占位贴图全部转正 / ⑧没玩出问题（推演留档）/ taczaddon 双装已测，jar 已回位两实例
+- 挂起：README 双语
+- 本轮：版本 1.0.0 / 图标（1536² jpeg→256² png+mods.toml logoFile）/ 双配方 / 弹药箱不可堆叠 / 新配置 expandContainersInside 默认 true / backpackUsable 语义配合 / config 描述修正
+
+### 堆叠漏洞（max 实测报告，本轮根治）
+叠 N 个空弹药箱右键收 1 发再拆分 = 复制 N 发（多叠共享一份 NBT，光标交互写的是整叠的共享 NBT）；反向整组被吞。修法：stacksTo(1) 唯一物品语义。旧存档超叠箱：cap 不暴露（count 守卫）+光标交互回落 vanilla——max 自行丢弃重拿。
+
+### cap 暴露架构（M15 核心）
+- AmmoCrateBlockItem.initCapabilities → CrateStorageProvider：每 ItemStack 实例缓存一个活 InInventoryCrateHandler（count==1 守卫；Forge 物品 cap 模式，与 SB 背包/Forge 潜影盒物品 wrapper 同构）
+- 唯一活副本：光标交互（loadHandler/saveHandler/countOccupied 删除，改经 cap）+ 供弹源 3 + SB 树内箱（SbCompatImpl 改经 cap）共用同一实例
+- 源 2（expandContainerItems）展开跳过弹药箱物品：防双源 + bare 源缺直写清扫 → 通用展开开不到弹药箱，backpackUsable 保持为供弹链专属门（语义=「作为弹药源并向外暴露存储」，存储 cap 恒暴露不受开关影响）
+- 新配置 ammo_crate.expandContainersInside（默认 true）：源 4 世界箱 = crateSource()——BE 36 格 + 内部容器物品组合视图，消耗/查询两侧同一构造；盒中盒不展开（max 拍板语义「在弹药箱中的弹药箱不会生效」）
+- BE sweep 触发面扩展：含 IAmmoBox 或含暴露 cap 的容器物品 → fire（内部容器直写 NBT 不触发 BE 槽位 op，清扫兜 setChanged+推送）
+
+### 配方（1.20.1 forge:partial_nbt——javap 实证：CraftingHelper.getNBT 字符串/对象双形式皆可）
+- ammo_crate：钻石弹药盒（{AmmoCount:0,AmmoId:"tacz:empty",Level:2}）围一圈 8 木板
+- ammo_feed_upgrade：铁弹药盒（{Level:0}）+ sophisticatedbackpacks:upgrade_base，无序，挂 forge:mod_loaded(sophisticatedbackpacks) 条件
+- 匹配口径注意：新合成钻石盒 NBT 只有 {Level:2}（无 AmmoCount/AmmoId 键）→ 不匹配——只有用空过的盒能合成（TACZ 清空时写 AmmoId:empty+AmmoCount:0）；铁盒 {Level:0} 全状态匹配
+
+### 留档不修（max 指示「记一下」）
+1. 潜影盒识别 bug：消耗侧认（源 2 展开）/ 识别侧瞎（buildExtendedSources 无源 2）——世界箱放 1 发解锁预检后实际全抽潜影盒弹。修法方向=查询侧补通用展开源，与 HUD 计数/M14 sweep 链整体设计后再动
+2. ⑧ hasAmmoToConsume（GunAnimationStateContext:168，客户端 Lua 动画条件）：三步判定全不认扩展源（不检弹→dummy→裸背包 36 格）——弹链枪背包空+箱有弹时动画侧认为断粮（射击正常）；max 的枪 Lua 未用此条件故无感。修法同构：RETURN 兜底
+3. M12.1 SB gating 机制存疑：源 2 代码无显式 SB 跳过，但 max 实测 expandContainerItems 开时 SB 不供弹——机制见十二.1 节（本轮已重读，结论以下轮回执核对为准）
+
+### 观察点
+- BE 内容器直写清扫 = 每发一次全量 BE 推送（潜影盒大 NBT 时包体可观）：弹链高频 20 发/s 带宽与 M14 同量级，实测观察
+- Forge 潜影盒物品 wrapper 对「盒在潜影盒内」setAmmoCount 直写的写回语义未验证（理论边角）
+
+### 验证清单（待 max 游戏内）
+1. 两配方可合成（注意：钻石盒须用空过的——新合成盒不匹配 ingredient）
+2. 弹药箱不可堆叠（新拿两把不并叠）
+3. 潜影盒放世界弹药箱 → 供弹 + HUD 计数（expandContainersInside 默认 true）
+4. 背包内弹药箱物品（backpackUsable 开）供弹回归（现在走 cap 活实例）
+5. 光标交互回归（右键收入/取出）
+6. M14 组②回归：盒在世界弹药箱里射击后重进存档计数正确
+7. SB 内弹药箱物品（backpackUsable 开）供弹回归（SbCompatImpl 改经 cap）
+验证过 → commit（工作树本轮 8+ 文件改动）
+
+### 已知边界（M15 活副本架构补充，2026-10-31 深夜自查）
+- 存储 cap 为每 ItemStack 实例缓存的活副本：LazyOptional 惰性构造使 loot copy_nbt 的后置 NBT 合并发生在副本反序列化之前（理论安全，未实测）。
+- 反面：外部对物品 NBT 的原位改写（管理员工具 /data 直改 BlockEntityTag 等）副本不感知，副本后续写回会覆盖之——旧实现（每操作新建副本）无此问题；正常玩法无原位改写路径，接受。
+
+### M12.1 机制考古定稿（SB 背包 cap 敞开性，2026-10-31 深夜自主轮，纯只读）
+问题：max 实测「expandContainerItems 开时 SB 背包不供弹」与代码预期（闸开=容器展开含 SB）矛盾。
+证据链（ref 源码 + 部署 jar javap BackpackItem$2 一致性核对，六层全默认直通）：
+- L1 BackpackItem$2.getCapability(ITEM_HANDLER)：count>1 → empty；否则 → wrapper.getInventoryForInputOutput()
+- L2 BackpackWrapper：懒构造 InventoryIOHandler → getFilteredItemHandler()
+- L3 InventoryIOHandler（39 行）：无 IO 过滤升级（input/output filters 均空）→ 直接返回 getInventoryForUpgradeProcessing()，不套 FilteredItemHandler
+- L4 InventoryModificationHandler（43 行）：无 IInventoryWrapperUpgrade 升级 → 直通 getInventoryHandler()（上游单测 assertSame 铁证）
+- L5 BackpackWrapper.getInventoryHandler：懒构造 BackpackInventoryHandler（真库存，无方法级 override）
+- L6 InventoryHandler.extractItem：isSlotBlocked（默认 slot->false，仅 MobCatcher 类升级设）→ partitioner（无 baseIndexes NBT → 单 Default 全槽）→ extractItemInternal（正常提取 + onContentsChanged → saveInventory 持久化）
+结论：默认（无过滤/无 wrapper 类升级）SB 背包 ITEM_HANDLER cap 在服务端完全敞开。
+- 客户端线程：initWrapper 走 Noop → 0 槽空库存（SB cap 客户端恒空；我们逻辑在服务端不受影响）
+- linked 背包（ENDPOINT）：LinkedStorageBackpackWrapper 挂 canonical host（特殊功能，不改变敞开结论）
+- 源 2（cap 路径）与源 5（SbCompatImpl 消耗视图）同走 getInventoryForInputOutput()——两源行为恒一致；源 5 树清扫走 getInventoryHandler() 主库存（过滤不挡清扫视野，语义正确）
+「SB 不供弹」剩余解释（SB 侧已无拦截，指向我们自己的查询/预检层）：
+- a) 测试时闸未开（默认 false）——最平凡解释
+- b) 换弹预检只认源 3+4+5 不含源 2——R 键换弹场景 SB 内弹不被预检承认
+- c) ⑧开火条件 hasAmmoToConsume 只扫裸背包（留档未修项）——普通枪射击只看裸背包
+- 实证注（2026-10-31 预检链调用面 grep）：b/c 机制确认存在——AbstractGunItemMixin L77（hasInventoryAmmo）/L107（canReload）均 Inject-RETURN 兜底 hasAmmoInCrates（仅 3+4+5）；TACZ hasAmmoToConsume（⑧动画条件）我们零 mixin（原版只扫裸背包）。max 当时命中 a/b/c 哪个待重测法 A 裁决。
+- 重测法 A（定生死）：背包放 1 发裸弹（同时过 b/c 预检）+ SB 装同弹 + 开闸 + 弹链枪连射 → 枪持续响且 SB 在减 = cap 敞开坐实（预期）；枪哑 = 查我们自己预检链（与潜影盒识别 bug 同根）
+config 注释矛盾（待 max 裁决，代码零改动）：
+M15 版注释「精妙背包的供弹不受本开关影响（走 SB 供弹升级）」与代码实证矛盾——M10/M14 注释明载「闸开且 SB 背包在主 36 格时双计一次（源 2+源 5）」：闸开 = SB 被源 2 展开。
+- 选项 a：仅改 config 注释（如实描述：闸开含 SB，与升级叠加时同背包双计，M10 已知悉边角）
+- 选项 b1：源 2 跳过装启用供弹升级的 SB 背包（防双计，其余行为不变）——改码+重建
+- 选项 b2：源 2 跳过所有 SB 背包（升级唯一通道，裸 SB 闸开也不展开——与其他容器不一致）——改码+重建，推翻 M10「闸与升级正交」拍板
+
+---
+
+## M16：源 2 查询侧缺口定性 + C 立项 + max 三决策（2026-10-31）
+
+### 触发：max 回场实测三现象（通用展开开闸状态）
+1. 物品栏 1 发裸弹 + 无供弹升级 SB 装同弹 → 射一发停，HUD 只显示 1 发
+2. 潜影盒同样「开不了」
+3. SB 背包放进弹药箱（方块）后不同步，必须取出打开 GUI 看一眼（回归，「又」）
+
+### 定性：三现象一根——源 2 只活在消耗侧
+- 消耗侧 buildSources（AmmoSourceResolver）含通用展开分支，LivingEntityShootMixin / ModernKineticGunScriptAPIMixin 两 @Redirect → getCombinedSources，管道通
+- 查询侧 hasAmmoInCrates / countAmmoInCrates 走 buildExtendedSources（L276 起装配线），只含源 3（背包内箱）+ 源 4（附近箱）+ 源 5（SB 升级），无源 2 分支
+- 物品栏那发打空 → 原版预检 false → 兜底也 false → 枪停；消耗管道从未被走到
+- 带升级 SB（源 5）M12 已全链路通（预检/HUD/消耗/镜像同步）；max 测的是无升级 SB 走源 2——两体系分界，此前 SB 全通结论不背书本案
+- 【教训】AmmoSourceResolver 有两条装配线（消耗 buildSources / 查询 buildExtendedSources），新源接入只动消耗线 = 查询盲区。C 立项落地时抽公共方法合并两线
+
+### SB 进弹药箱不同步根因
+- 背包在箱 BE 内 → 不在任何玩家身上 → 推送目标扫描 collectUpgradeTreeUuids（只扫玩家）永不命中 → dirty 标记 100 tick 孤儿超时丢弃 → 客户端镜像死水
+- 「拿出来看一眼」= 回到玩家身上后 GUI Request 链刷新镜像
+- 修复：推送目标扩到玩家附近弹药箱内 SB 树（getNearbyAmmoCrates 复用，半径同 config）——并入 C 立项③
+
+### C 立项方案（两件套 + 合并修复，待 max 拍板做不做）
+1. 查询侧补源 2：buildSources/buildExtendedSources 的源 2 段抽公共方法两线共用；客户端走 wrapper cap + refreshStaleTree 镜像刷新，服务端真数据；b1 跳过判定同步生效（防计数双倍）
+2. 推送集扩张：闸开时从「带升级树」扩到「所有 SB 树」（dirty 变更才推，常态零成本）
+3. SB 进箱修复合并（见上）
+
+落地必验（不确定项，放行后必炸点）：物品态容器 cap（潜影盒）实例稳定性——TACZ 直改盒 NBT 时拿到的是活引用还是反序列化副本。副本则源 2 潜影盒消耗存档回滚（现在被预检挡着没暴露）。验证法：修完后游戏内物品栏装弹潜影盒连射 + 存档重进看弹数。
+
+### max 三决策（2026-10-31 已拍板）
+1. 钻石盒三键：任意状态可合（partial_nbt 匹配 {Level:2}）+ 产物继承弹药。实现：自定义 RecipeSerializer（读输入盒 AmmoId/AmmoCount → 实弹塞产物箱；TACZ 盒单弹种计数模型 → 我们箱 Items 列表一对一转换；shaped 单 D 槽无多输入歧义）
+2. 箱中箱：放开展开参与供弹。crateSource 内 skip 换源 3 同款带清扫源：new AmmoSource(view, view::flushExternalDirectWrites)；不递归（与通用展开「仅一层」同语义）；BE sweep（M15 扩展版）兜外层
+3. config 注释矛盾：b1——源 2 跳过装有「启用状态」供弹升级的 SB。启用语义白拿：UpgradeHandler.initializeTypeWrappers L203 `wrapper.isEnabled() &&` 才 addTypeWrapper，getTypeWrappers 全是启用 wrapper（源码实证 2026-10-31）
+
+### 附带考古发现
+- isEnabled 疑云排除：collectAmmoSources / collectUpgradeTreeUuids 的 getTypeWrappers(TYPE).isEmpty() 判定天然含启用语义，非 bug
+- 箱中箱存在性：默认 crateAmmoOnly=true 只收 IAmmo/IAmmoBox，箱子进不了弹药箱——skip 只在通用容器模式下有意义
+- UpgradeToggleMessageMixin 已钩 toggle → markDirty：b1 落地后 toggle 影响 SB 树的源 2 收集判定，同步链已覆盖
+
+### 旧决策面板状态刷新（M15/M12.1 时代）
+- ①钻石盒三键 → 已拍板（本节「三决策」1）
+- ②7 项验证 → 仍待（清单已扩充见下）
+- ③重测法 A → 被本轮代码考古取代（定性闭环，无需重测）
+- ④config 矛盾 → 已拍板 b1
+- ⑤commit → 待验证后
+
+### 待办
+- [ ] max 拍板：C 立项做不做 + 动码顺序 A（三决策 + C + SB 进箱一次全动，一次构建一次验证——b1 判定与 C 源 2 分支同段代码，分两轮白干一次）/ B（先三决策，C 另开轮）
+- [ ] 动码：b1（SbCompat 静态判定 + 源 2 循环跳过）/ 箱中箱（skip 换带清扫源）/ 配方（JSON {Level:2} + RecipeSerializer 继承弹药）/ C 两件套
+- [ ] 验证清单：原 7 项 + 无升级 SB 供弹 + HUD 含容器弹 + 潜影盒存档回滚 + SB 箱内同步
+- [ ] commit（12 文件 + 本轮改动）

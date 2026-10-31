@@ -13,6 +13,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -85,12 +86,17 @@ public class AmmoCrateBlockEntity extends BlockEntity {
     /**
      * [M14] 外部直写清扫：槽内含弹药盒时补跑标准善后（setChanged + 客户端推送）。
      * 直改数据已落 BE 槽位活 ItemStack（数据不丢），缺的只是通知链——本方法补上。
-     * 只认盒：散弹消耗走 extractItem（onContentsChanged 已即时善后）。
+     * [M15] 触发面：盒（IAmmoBox）或容器物品（暴露 ITEM_HANDLER 的直写路径）任一在场即触发；
+     * 散弹消耗走 extractItem（onContentsChanged 已即时善后）。
      * 幂等：标脏/推送无副作用；客户端误入（防御）时 sendBlockUpdated 有 isClientSide 守卫。
      */
     public void sweepExternalAmmoBoxChange() {
         for (int i = 0; i < items.getSlots(); i++) {
-            if (items.getStackInSlot(i).getItem() instanceof IAmmoBox) {
+            ItemStack s = items.getStackInSlot(i);
+            // [M15] 触发面扩展：内部容器物品（潜影盒等暴露存储 cap 的物品）同样会被
+            // 外部消耗直改 NBT（其 wrapper 写回不触发 BE 槽位 handler op）→ 一并纳入
+            if (s.getItem() instanceof IAmmoBox
+                    || s.getCapability(ForgeCapabilities.ITEM_HANDLER, null).isPresent()) {
                 onInventoryContentsChanged();
                 return;
             }

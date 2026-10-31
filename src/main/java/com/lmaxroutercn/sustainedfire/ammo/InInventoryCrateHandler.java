@@ -24,6 +24,9 @@ import net.minecraft.world.item.ItemStack;
  * ItemStack，不触发任何 handler op、不落 crateStack NBT：直改后副本与
  * 容器槽位 NBT 分叉，服务端存档回滚 + 客户端可见性双丢失。
  * flushExternalDirectWrites 把副本现状写回（消耗完成后由清扫链统一调用）。
+ * [M15] 实例唯一化：物品 cap（AmmoCrateBlockItem.initCapabilities）为每个 ItemStack
+ * 实例缓存一份活副本，供弹链（源 3）、光标交互与 SB 树内箱（SbCompatImpl）共用
+ * 同一实例——全项目对一把箱物品只有一份活副本，写入互通无分叉。
  *
  * 前置守卫（调用方 AmmoSourceResolver.collectInventoryCrates）：
  * 仅 stack.getCount()==1 的箱子参与——多叠物品的 NBT 写回无法定位唯一目标

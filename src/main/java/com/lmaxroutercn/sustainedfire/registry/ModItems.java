@@ -25,5 +25,7 @@ public final class ModItems {
      */
     // [2026-10-28] 升级为自定义物品：内容随物品 NBT + 背包光标交互 + 耐久条 + 开合盖模型谓词（下方原注释的 backpackUsable 手持演进仍为远期待办）
     public static final RegistryObject<Item> AMMO_CRATE = ITEMS.register("ammo_crate",
-            () -> new AmmoCrateBlockItem(ModBlocks.AMMO_CRATE.get(), new Item.Properties()));
+            // [M15 max 2026-10-31 拍板] 不可堆叠：多叠共享一份 NBT = 复制/吞物品漏洞
+            // （叠 64 空箱右键收 1 发再拆分 = 复制 64 发；反向整组被吞），唯一物品语义。
+            () -> new AmmoCrateBlockItem(ModBlocks.AMMO_CRATE.get(), new Item.Properties().stacksTo(1)));
 }

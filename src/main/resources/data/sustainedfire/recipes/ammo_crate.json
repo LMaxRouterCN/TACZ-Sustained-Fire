@@ -1,0 +1,9 @@
+{
+  "type": "sustainedfire:ammo_crate",
+  "pattern": [ "PPP", "PDP", "PPP" ],
+  "key": {
+    "P": { "tag": "minecraft:planks" },
+    "D": { "type": "forge:partial_nbt", "item": "tacz:ammo_box", "nbt": "{Level:2}" }
+  },
+  "result": { "item": "sustainedfire:ammo_crate" }
+}

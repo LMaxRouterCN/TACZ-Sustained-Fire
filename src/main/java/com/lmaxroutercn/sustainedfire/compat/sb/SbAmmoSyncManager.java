@@ -1,6 +1,8 @@
 package com.lmaxroutercn.sustainedfire.compat.sb;
 
 import com.lmaxroutercn.sustainedfire.config.SustainedFireConfig;
+import com.lmaxroutercn.sustainedfire.ammo.AmmoSourceRegistry;
+import com.lmaxroutercn.sustainedfire.block.entity.AmmoCrateBlockEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -56,8 +58,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * - [M12.2] 守卫谓词换为 EffectiveSide.get()：Render thread=改名的 JVM 主线程（组="main" 定死），
  *   SidedThreadGroups.CLIENT 组全生态无构造者——旧线程组判断在客户端永假（M12 三症状的结构性根因）；
  *   EffectiveSide 对非 SidedThreadGroup 线程回退 CLIENT 是官方语义；SERVER 组单实例下 markDirty 严格等价 [长期记忆: 053]
- * - 推送规则 dirty && 在携带者"带升级的树"内：嵌套子背包 B 只有挂在带升级 A 树下才推
- *   （弹药读数经过 A 的 getInventoryForInputOutput 展开树），孤背包不推；
+ * - 推送规则 dirty && 在携带者"读数树"内（[M16] 推送面扩张，max 拍板 C）：身上树门票 =
+ *   带升级 || 闸 expandContainerItems 开（源 2 展开读它）；[M16-C] 箱内树门票 =
+ *   闸 expandContainersInside 开（crateSource 内部展开读它）且箱在供弹半径内——
+ *   SB 进箱后的内容变更同样推给附近玩家（进箱同步修复）。嵌套子背包 B 只有挂在
+ *   读数树 A 下才推（孤背包不推）；
  *   无 carrier（方块态 / 地面 / 离线玩家）超时 100 tick 丢弃
  * - 已知限制（GOAL-PLAN M12 记录）：BE 态背包变更后 100 tick 内被捡回、或离线携带期间变更，
  *   携带者镜像可能漏一次推送，开一次 SB GUI 自愈（GUI 槽同步写穿兜底）
@@ -136,14 +141,14 @@ public final class SbAmmoSyncManager {
         }
         Set<UUID> pushed = new HashSet<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            // 该玩家身上全部"带供弹升级"背包树的 uuid 全集（含嵌套子背包）
-            Set<UUID> upgradeTreeUuids = new HashSet<>();
-            collectUpgradeTreeUuids(player, upgradeTreeUuids);
-            if (upgradeTreeUuids.isEmpty()) {
+            // [M16] 该玩家读数树的 uuid 全集（身上 + 附近箱内，含嵌套子背包）
+            Set<UUID> carrierTreeUuids = new HashSet<>();
+            collectCarrierTreeUuids(player, carrierTreeUuids);
+            if (carrierTreeUuids.isEmpty()) {
                 continue;
             }
             for (UUID uuid : DIRTY.keySet()) {
-                if (upgradeTreeUuids.contains(uuid)) {
+                if (carrierTreeUuids.contains(uuid)) {
                     // 深拷后发送：网络序列化可能延迟到 Netty 线程，SavedData 活引用有并发修改风险
                     CompoundTag contents = BackpackStorage.get().getOrCreateBackpackContents(uuid).copy();
                     SBPPacketHandler.INSTANCE.sendToClient(player, new BackpackContentsMessage(uuid, contents));
@@ -211,18 +216,32 @@ public final class SbAmmoSyncManager {
     // ==================== 双端共用：树遍历 ====================
 
     /**
-     * 收集玩家身上全部"带供弹升级"背包树的 uuid 全集。
-     * 只有带升级的树才推送：弹药读数（HUD/预检/消耗）只经过这些树的 getInventoryForInputOutput
-     * 展开视图，孤树的变更不影响任何弹药读数。
+     * [M16] 收集玩家"读数树"的 uuid 全集（推送面 = 读数面，max 拍板 C 推送集扩张）。
+     * 身上树门票：带供弹升级（源 5 读）|| 闸 expandContainerItems 开（源 2 展开读）；
+     * 箱内树门票：闸 expandContainersInside 开（crateSource 内部展开读）且箱在供弹半径。
+     * 不在读数面上的树不推——孤树变更不影响任何弹药读数，推了也是白流量。
      */
-    private static void collectUpgradeTreeUuids(Player player, Set<UUID> out) {
+    private static void collectCarrierTreeUuids(Player player, Set<UUID> out) {
+        boolean expandOn = SustainedFireConfig.booleanOr(SustainedFireConfig.SUPPLY_EXPAND_CONTAINER_ITEMS);
         for (ItemStack stack : SbCompatImpl.collectCandidateStacks(player)) {
             stack.getCapability(CapabilityBackpackWrapper.getCapabilityInstance()).ifPresent(wrapper -> {
-                if (!wrapper.getUpgradeHandler()
+                if (expandOn || !wrapper.getUpgradeHandler()
                         .getTypeWrappers(AmmoFeedUpgradeItem.TYPE).isEmpty()) {
                     collectWrapperTreeUuids(wrapper, out, new HashSet<>());
                 }
             });
+        }
+        // [M16-C] 附近弹药箱内的 SB 树（进箱同步修复）：与 crateSource 同口径
+        // （expandContainersInside 闸 + 供弹半径 + OPEN 过滤——读不到的不推）
+        if (SustainedFireConfig.booleanOr(SustainedFireConfig.AMMO_CRATE_EXPAND_CONTAINERS_INSIDE)) {
+            double radius = SustainedFireConfig.doubleOr(SustainedFireConfig.AMMO_CRATE_RADIUS);
+            for (AmmoCrateBlockEntity crate : AmmoSourceRegistry.getNearbyAmmoCrates(player, radius)) {
+                var handler = crate.getItemHandler();
+                for (int i = 0; i < handler.getSlots(); i++) {
+                    handler.getStackInSlot(i).getCapability(CapabilityBackpackWrapper.getCapabilityInstance())
+                            .ifPresent(wrapper -> collectWrapperTreeUuids(wrapper, out, new HashSet<>()));
+                }
+            }
         }
     }
 

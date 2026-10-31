@@ -6,13 +6,15 @@ import net.minecraftforge.common.ForgeConfigSpec;
  * 通用配置（common，存档无关）。
  *
  * 组结构（2026-10-29 扩容，max 三连拍板 + 附魔数值配置化拍板）：
- *   supply.expandContainerItems  供弹时是否展开背包内物品自带的容器（精妙背包等一切暴露
- *                                ITEM_HANDLER 的物品）。默认 false：背包类物品不再无条件供弹
- *                                （后续 M10 由专属升级物品重新开放，max 已确认断供后果）。
+ *   supply.expandContainerItems  供弹时是否展开背包内物品自带的容器（潜影盒等一切暴露
+ *                                ITEM_HANDLER 的物品；精妙背包供弹由供弹升级控制，不吃本闸）。
+ *                                默认 false。
  *   ammo_crate.backpackUsable    弹药箱物品在玩家背包内是否同样作为弹药源（M6 预留，本次接线）。
  *   ammo_crate.radius            放置态弹药箱的取弹查找半径。
  *   ammo_crate.crateAmmoOnly     true = 弹药箱只允许装入 TACZ 弹药/弹药盒。统一过滤，
  *                                同时作用于放置态箱子、背包内物品态、光标交互与漏斗。
+ *   ammo_crate.expandContainersInside [M15] 放置态弹药箱是否展开内部容器物品（潜影盒等）
+ *                                为弹药源，默认 true；盒中盒不展开。
  *   sb_sync.enabled / intervalTicks  [M12] SB 背包内容变更主动推送携带者客户端（GUI 外同步）。
  *   enchantments.*               全部附魔数值（max 拍板：附魔具体数值必须进配置）。
  *
@@ -42,6 +44,9 @@ public final class SustainedFireConfig {
 
     /** true = 弹药箱只收 TACZ 弹药/弹药盒（统一过滤，默认 false = 通用容器） */
     public static final ForgeConfigSpec.BooleanValue AMMO_CRATE_AMMO_ONLY;
+
+    /** [M15] 放置态弹药箱是否展开内部容器物品（潜影盒等）为弹药源（默认 true；盒中盒不展开） */
+    public static final ForgeConfigSpec.BooleanValue AMMO_CRATE_EXPAND_CONTAINERS_INSIDE;
 
     // ---- sb_sync：SB 供弹客户端同步（M12）----
 
@@ -90,17 +95,22 @@ public final class SustainedFireConfig {
 
         builder.push("supply");
         SUPPLY_EXPAND_CONTAINER_ITEMS = builder
-                .comment("Expand items' own inventories (e.g. Sophisticated Backpacks) inside the shooter's inventory as ammo sources.",
-                        "Default false: backpacks no longer feed guns unconditionally.",
-                        "供弹时是否把玩家背包内物品自带的容器（如精妙背包）展开为弹药源。",
-                        "默认 false：背包类物品不再无条件供弹（后续版本由其专属升级控制）。")
+                .comment("Expand container items (shulker boxes, ...) inside the shooter's inventory as ammo sources.",
+                        "When enabled, non-upgraded Sophisticated Backpacks also feed through this switch;",
+                        "backpacks with an active Ammo Feed upgrade are governed by the upgrade alone (no double counting).",
+                        "Default false.",
+                        "供弹时是否展开玩家背包内的容器物品（潜影盒等一切暴露存储的物品）为弹药源。",
+                        "开启后未装升级的精妙背包同样经本开关供弹（源 2 展开专用视图）；",
+                        "装启用供弹升级的背包由升级独占（源 2 跳过防双计，M16 b1 落档）；默认 false。")
                 .define("expandContainerItems", false);
         builder.pop();
 
         builder.push("ammo_crate");
         AMMO_CRATE_BACKPACK_USABLE = builder
-                .comment("Ammo crate in the player inventory also works as an ammo source (fully replaces vanilla ammo boxes).",
-                        "弹药箱放在背包里时同样作为弹药源（完全替代原版弹药盒）。")
+                .comment("Ammo crate item in the player inventory feeds guns as an ammo source (fully replaces vanilla ammo boxes).",
+                        "Its 36-slot storage capability is always exposed to other systems regardless of this switch.",
+                        "物品态弹药箱是否作为弹药源参与供弹（完全替代原版弹药盒）。",
+                        "其 36 格存储 capability 始终向外暴露（供其他系统读写），不受本开关影响。")
                 .define("backpackUsable", false);
         AMMO_CRATE_RADIUS = builder
                 .comment("Search radius (blocks) for placed ammo crates when resolving reload / belt-feed ammo.",
@@ -110,6 +120,13 @@ public final class SustainedFireConfig {
                 .comment("true = ammo crates (placed / item form / cursor / hoppers) only accept TACZ ammo and ammo boxes.",
                         "true = 弹药箱（放置态/物品态/光标交互/漏斗）只允许装入 TACZ 弹药与弹药盒。")
                 .define("crateAmmoOnly", false);
+        AMMO_CRATE_EXPAND_CONTAINERS_INSIDE = builder
+                .comment("Whether placed ammo crates also feed guns from container items inside them",
+                        "(shulker boxes, backpacks - anything exposing an item handler).",
+                        "Item-form ammo crates inside (stack of 1) feed as crate-item sources too (M16 crate-in-crate).",
+                        "放置态弹药箱是否把内部容器物品（潜影盒、背包等一切暴露存储的物品）展开为弹药源。",
+                        "箱内的物品态弹药箱（计数 1）同样作为弹药源（M16 箱中箱供弹，与所在容器无关）。")
+                .define("expandContainersInside", true);
         builder.pop();
 
         builder.push("sb_sync");

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "sophisticatedbackpacks" }
+  ],
+  "ingredients": [
+    { "type": "forge:partial_nbt", "item": "tacz:ammo_box", "nbt": "{Level:0}" },
+    { "item": "sophisticatedbackpacks:upgrade_base" }
+  ],
+  "result": { "item": "sustainedfire:ammo_feed_upgrade" }
+}
