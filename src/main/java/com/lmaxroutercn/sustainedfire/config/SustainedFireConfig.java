@@ -99,18 +99,18 @@ public final class SustainedFireConfig {
                         "When enabled, non-upgraded Sophisticated Backpacks also feed through this switch;",
                         "backpacks with an active Ammo Feed upgrade are governed by the upgrade alone (no double counting).",
                         "Default false.",
-                        "供弹时是否展开玩家背包内的容器物品（潜影盒等一切暴露存储的物品）为弹药源。",
-                        "开启后未装升级的精妙背包同样经本开关供弹（源 2 展开专用视图）；",
-                        "装启用供弹升级的背包由升级独占（源 2 跳过防双计，M16 b1 落档）；默认 false。")
+                        "供弹时是否展开玩家背包内的容器物品（潜影盒等一切自带存储格的物品）为弹药源。",
+                        "开启后，未装升级的精妙背包同样经本开关供弹；",
+                        "装启用供弹升级的背包由升级独占，弹药不重复计算；默认 false。")
                 .define("expandContainerItems", false);
         builder.pop();
 
         builder.push("ammo_crate");
         AMMO_CRATE_BACKPACK_USABLE = builder
-                .comment("Ammo crate item in the player inventory feeds guns as an ammo source (fully replaces vanilla ammo boxes).",
-                        "Its 36-slot storage capability is always exposed to other systems regardless of this switch.",
-                        "物品态弹药箱是否作为弹药源参与供弹（完全替代原版弹药盒）。",
-                        "其 36 格存储 capability 始终向外暴露（供其他系统读写），不受本开关影响。")
+                .comment("Ammo crate item in the player inventory feeds guns as an ammo source (fully replaces TACZ's own ammo boxes).",
+                        "Its 36-slot storage is always accessible to other mods (e.g. item pipes), regardless of this switch.",
+                        "物品态弹药箱是否作为弹药源参与供弹（完全替代 TACZ 本体弹药盒）。",
+                        "其 36 格存储始终可被其他模组（如管道）读写，不受本开关影响。")
                 .define("backpackUsable", false);
         AMMO_CRATE_RADIUS = builder
                 .comment("Search radius (blocks) for placed ammo crates when resolving reload / belt-feed ammo.",
@@ -122,10 +122,10 @@ public final class SustainedFireConfig {
                 .define("crateAmmoOnly", false);
         AMMO_CRATE_EXPAND_CONTAINERS_INSIDE = builder
                 .comment("Whether placed ammo crates also feed guns from container items inside them",
-                        "(shulker boxes, backpacks - anything exposing an item handler).",
-                        "Item-form ammo crates inside (stack of 1) feed as crate-item sources too (M16 crate-in-crate).",
-                        "放置态弹药箱是否把内部容器物品（潜影盒、背包等一切暴露存储的物品）展开为弹药源。",
-                        "箱内的物品态弹药箱（计数 1）同样作为弹药源（M16 箱中箱供弹，与所在容器无关）。")
+                        "(shulker boxes, backpacks - anything with internal storage).",
+                        "Item-form ammo crates placed inside also feed guns (a crate inside a crate).",
+                        "放置态弹药箱是否把内部容器物品（潜影盒、背包等一切自带存储格的物品）展开为弹药源。",
+                        "放入箱内的物品态弹药箱同样参与供弹（箱中箱）。")
                 .define("expandContainersInside", true);
         builder.pop();
 
@@ -137,7 +137,7 @@ public final class SustainedFireConfig {
                 .define("enabled", true);
         SB_AMMO_SYNC_INTERVAL = builder
                 .comment("Push interval in server ticks (1 = every tick, lowest latency; raise to save bandwidth on busy servers).",
-                        "推送间隔（服务端 tick）：1 = 每 tick，延迟最低（幻影窗口 ≈ 原版背包直读枪）；调大可省带宽。")
+                        "推送间隔（服务端 tick）：1 = 每 tick 同步一次，延迟最低；调大可节省带宽。")
                 .defineInRange("intervalTicks", 1, 1, 20);
         builder.pop();
 
