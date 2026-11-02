@@ -32,3 +32,4 @@ build-err.log
 build_log.txt
 build*.log
 /run-data/
+sustained-fire-ref/
